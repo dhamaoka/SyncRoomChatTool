@@ -1,56 +1,90 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Diagnostics;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows.Automation;
-using System.Threading;
-
+using System.Windows.Forms;
+using System.Speech.Synthesis;
+using System.Media;
+using System.IO;
 
 namespace SyncRoomChatTool
 {
     public partial class Form1 : Form
     {
+        enum CommentDivider : int
+        {
+            Comment = 1,
+            UserName = 2
+        }
+
         public Form1()
         {
             InitializeComponent();
         }
 
-        private bool TargetProcessIsAlive;
-        private AutomationElement chatLog;
         private static UIAutomationLib ui = new UIAutomationLib();
+
+        private static decimal waitTiming = 500;
+        private static string linkWaveFilePath = "";
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            TargetProcessIsAlive = false;
-            _ = CheckProcess("SYNCROOM",TargetProcessIsAlive,chatLog, this.statusStrip1);
+            Menu_EnebleSpeech.Checked = App.Default.canSpeech;
+            richTextBox1.LanguageOption = RichTextBoxLanguageOptions.UIFonts;
+            richTextBox1.Font = App.Default.logFont;
+            richTextBox1.ZoomFactor = App.Default.zoomFacter;
+            if (App.Default.waitTiming < 100)
+            {
+                waitTiming = 100;
+                App.Default.waitTiming = waitTiming;
+            }
+            else
+            {
+                waitTiming = App.Default.waitTiming;
+            }
+
+            if (!File.Exists(App.Default.linkWaveFilePath))
+            {
+                linkWaveFilePath = "";
+                App.Default.linkWaveFilePath = "";
+            }
+            else
+            {
+                linkWaveFilePath = App.Default.linkWaveFilePath;
+            }
+            App.Default.Save();
+
+            this.Size = App.Default.windowSize;
+
+            _ = CheckProcess("SYNCROOM", this.statusStrip1, this.richTextBox1);
         }
 
-        static async Task CheckProcess(string ProcessName, bool TargetProcessIsAlive, AutomationElement chatLog, StatusStrip ststp )
+        static async Task CheckProcess(string ProcessName, StatusStrip ststp, RichTextBox logView)
         {
+            /*
+             * 別タスクに、フォームのコントロールを渡して内容を変更するのは、お作法的にはダメなんだろうなぁ…と思いつつ。
+             */
+
+            //初期化。前回取得のログ全部と、最後のコメントの保管場所
+            string oldLog = "";
+            string lastComment = "";
 
             while (true)
             {
-                TargetProcess tp = new TargetProcess(ProcessName);
-                await Task.Delay(1000);
-
-                TreeNode tr = new TreeNode();
-
-                TargetProcessIsAlive = tp.IsAlive();
+                TargetProcess tp = new TargetProcess(ProcessName);  //結構プロセス生きてるか調べるかなと思って別クラスにしたけど、監視タスク内でしか見てねぇ。
+                await Task.Delay((int)waitTiming);
 
                 string toolMessage;
-                if (TargetProcessIsAlive)
+
+                if (tp.IsAlive())
                 {
                     toolMessage = "は起動されています。";
                     try
                     {
                         AutomationElement synroomElement = ui.GetMainFrameElement(tp.Proc());
-                        //WalkControlElements(synroomElement, tr);
 
                         IntPtr chatwHnd = ui.FindHWndByCaptionAndProcessID("チャット", tp.Id());
 
@@ -59,8 +93,73 @@ namespace SyncRoomChatTool
                             AutomationElement chatWindow = AutomationElement.FromHandle(chatwHnd);
                             chatWindow.SetFocus();
                             ststp.Items[1].Text = "チャットログ監視中。";
-                            chatLog = ui.GetElement(synroomElement);
-                            var arry = chatLog.Current.Name.Split('\u2028');
+
+                            AutomationElement chatLog = ui.GetElement(synroomElement);
+                            ValuePattern vp = ui.GetValuePattern(chatLog);
+
+                            if (vp == null) { break;}
+
+                            Match match;
+                            match = Regex.Match(chatLog.Current.Name, "^チャットログ");
+                            if (match.Success)
+                            {
+                                if (oldLog == "")
+                                {
+                                    //基本初回のみ。
+                                    oldLog = vp.Current.Value;
+                                    logView.Text = oldLog;
+                                }
+
+                                //チャットログに変化があった場合。
+                                if (oldLog != vp.Current.Value)
+                                {
+                                    oldLog = vp.Current.Value;
+                                    string newComment = "";
+                                    logView.Text = vp.Current.Value;
+
+                                    //改行で区切って、一番最後を最新コメントとする。
+                                    string[] ary = vp.Current.Value.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+                                    newComment = ary[ary.Count() - 1];
+
+                                    if (App.Default.canSpeech)
+                                    {
+                                        //ユーザ名の取得
+                                        string userName = GetComment(newComment, CommentDivider.UserName);
+
+                                        string commentText = "";
+                                        //リンクの場合
+                                        if (IsLink(newComment))
+                                        {
+                                            commentText = "リンクが張られました。";
+                                            if (File.Exists(linkWaveFilePath))
+                                            {
+                                                SoundPlayer player = new System.Media.SoundPlayer(linkWaveFilePath);
+                                                //非同期再生する
+                                                player.Play();
+                                                lastComment = newComment;
+                                                continue;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            //コメント部分の取得
+                                            commentText = GetComment(newComment, CommentDivider.Comment);
+                                        }
+
+                                        //リンクじゃないコメントで、コロンで区切った最後のコメントが来る。これ以降にあれやこれや入れる。
+
+                                        //空行チェック
+                                        if (IsBlank(newComment) == false && lastComment != newComment)
+                                        {
+                                            //音声用の別処理をぶっ込む。
+                                            SpeechSynthe(commentText);
+                                        }
+                                    }
+
+                                    lastComment = newComment;
+                                }
+                            }
                         }
                         else
                         {
@@ -70,20 +169,121 @@ namespace SyncRoomChatTool
                     catch (Exception ex)
                     {
                         Debug.WriteLine(ex.Message.ToString());
-                        break;
                     }
                 }
                 else
                 {
                     toolMessage = "は起動されていません。";
+                    oldLog = "";
+                    lastComment = "";
                 }
                 ststp.Items[0].Text = ProcessName + toolMessage;
             }
         }
 
+        private static string GetComment(string newComment, CommentDivider dv)
+        {
+            //コロンで区切る。
+            string[] ary = newComment.Split(new string[] { ":" }, StringSplitOptions.None);
+
+            if (ary.Length < 2)
+            {
+                return newComment;
+            }
+            else
+            {
+                return ary[ary.Length - (int)dv];
+            }
+        }
+
+        private static bool IsBlank(string newComment)
+        {
+            //末尾がコロンかどうか。空行チェック。
+            if (newComment.Substring(newComment.Length-1,1)==":")
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private static bool IsLink(string newComment)
+        {
+            //リンクかどうかのチェック
+            Match match;
+            match = Regex.Match(newComment, "https?://");
+            if (match.Success)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private static void SpeechSynthe(string commentText)
+        {
+            string speechComment = commentText;
+
+            SpeechSynthesizer synth = new SpeechSynthesizer();
+            synth.SpeakAsync(speechComment);
+        }
+
+
         private void MenuClose_Click(object sender, EventArgs e)
         {
             Application.Exit();
+        }
+
+        private void RichTextBox1_LinkClicked(object sender, LinkClickedEventArgs e)
+        {
+            // クリックされたリンクをWebブラウザで開く
+            Process.Start(e.LinkText);
+        }
+
+        private void MenuOption_Click(object sender, EventArgs e)
+        {
+            AppConfig apConf = new AppConfig();
+            if (apConf.ShowDialog() == DialogResult.OK)
+            {
+                waitTiming = apConf.waitTiming;
+                linkWaveFilePath = apConf.linkWaveFilePath;
+                App.Default.linkWaveFilePath = linkWaveFilePath;
+                App.Default.waitTiming = waitTiming;
+                App.Default.Save();
+            }
+        }
+
+        private void MenuFont_Click(object sender, EventArgs e)
+        {
+
+            fontDialog1.Font = richTextBox1.Font;
+            DialogResult dr = fontDialog1.ShowDialog();
+
+            if (dr == DialogResult.OK)
+            {
+                richTextBox1.Font = fontDialog1.Font;
+            }
+        }
+
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            App.Default.zoomFacter = richTextBox1.ZoomFactor;
+            App.Default.logFont = richTextBox1.Font;
+            App.Default.windowSize = this.Size;
+            App.Default.waitTiming = waitTiming;
+            App.Default.Save();
+        }
+
+        private void richTextBox1_TextChanged(object sender, EventArgs e)
+        {
+            //カレット位置を末尾に移動
+            richTextBox1.SelectionStart = richTextBox1.Text.Length;
+            //カレット位置までスクロール
+            richTextBox1.ScrollToCaret();
+        }
+
+        private void Menu_EnebleSpeech_Click(object sender, EventArgs e)
+        {
+            App.Default.canSpeech = Menu_EnebleSpeech.Checked;
+            App.Default.Save();
         }
     }
 }

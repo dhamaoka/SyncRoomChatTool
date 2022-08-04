@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Text;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows.Automation;
+using System.Windows.Forms;
 
 namespace SyncRoomChatTool
 {
@@ -35,7 +32,6 @@ namespace SyncRoomChatTool
         static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
         const int WM_GETTEXT = 0x000D;
-        const int WM_SETTEXT = 0x000C;
         const int WM_GETTEXTLENGTH = 0x000E;
 
         public string GetControlText(IntPtr hWnd)
@@ -55,17 +51,15 @@ namespace SyncRoomChatTool
             int maxCount = 9999;
             int ct = 0;
             IntPtr prevChild = IntPtr.Zero;
-            IntPtr currChild = IntPtr.Zero;
             while (true && ct < maxCount)
             {
-                currChild = FindWindowEx(IntPtr.Zero, prevChild, null, null);
+                IntPtr currChild = FindWindowEx(IntPtr.Zero, prevChild, null, null);
                 if (currChild == IntPtr.Zero) break;
                 if (IsWindowVisible(currChild))
                 {
                     if (GetControlText(currChild).Contains(windowTitle))
                     {
-                        uint procID = 0;
-                        GetWindowThreadProcessId(currChild, out procID);
+                        GetWindowThreadProcessId(currChild, out uint procID);
                         if (procID == ProcessID)
                         {
                             retIntPtr = currChild;
@@ -85,25 +79,10 @@ namespace SyncRoomChatTool
             return AutomationElement.FromHandle(p.MainWindowHandle);
         }
 
-        // チャット画面に強制フォーカス
-        public void ForceFocus(AutomationElement rootElement)
-        {
-            AutomationElementCollection allElements = rootElement.FindAll(TreeScope.Element | TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, ""));
-
-            foreach (AutomationElement el in allElements)
-            {
-                if (el.Current.Name.Contains("チャット画面"))
-                {
-                    el.SetFocus();
-                    break;
-                }
-            }
-        }
-
         // チャットログの中身を取得
         public AutomationElement GetElement(AutomationElement rootElement)
         {
-            AutomationElementCollection allElements = rootElement.FindAll(TreeScope.Element | TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, ""));
+            AutomationElementCollection allElements = rootElement.FindAll(TreeScope.Element | TreeScope.Descendants, new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit));
 
             //見つからなかったら、渡されたルートエレメントを返す。
             AutomationElement returnElement = rootElement;
@@ -120,13 +99,36 @@ namespace SyncRoomChatTool
             }
             return returnElement;
         }
+
+        public ValuePattern GetValuePattern(
+            AutomationElement targetControl)
+        {
+            ValuePattern valuePattern;
+            try
+            {
+                valuePattern =
+                    targetControl.GetCurrentPattern(
+                    ValuePattern.Pattern)
+                    as ValuePattern;
+            }
+            // Object doesn't support the ValuePattern control pattern
+            catch (InvalidOperationException)
+            {
+                return null;
+            }
+
+            return valuePattern;
+        }
     }
+
+
 
     public class TargetProcess
     {
         private readonly Process targetProcess;
 
-        public TargetProcess(string pName) {
+        public TargetProcess(string pName)
+        {
             Process[] ps = System.Diagnostics.Process.GetProcessesByName(pName);
             foreach (Process p in ps)
             {
@@ -160,7 +162,7 @@ namespace SyncRoomChatTool
 
         public IntPtr Handle()
         {
-            return targetProcess.Handle; 
+            return targetProcess.Handle;
         }
     }
 

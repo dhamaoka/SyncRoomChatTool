@@ -1,7 +1,24 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)">
-  <Profiles>
-    <Profile Name="(Default)" />
-  </Profiles>
-  <Settings />
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="SyncRoomChatTool.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="waitTiming" Type="System.String" Scope="User">
+      <Value Profile="(Default)">750</Value>
+    </Setting>
+    <Setting Name="logFont" Type="System.String" Scope="User">
+      <Value Profile="(Default)">メイリオ, 15pt</Value>
+    </Setting>
+    <Setting Name="zoomFacter" Type="System.String" Scope="User">
+      <Value Profile="(Default)">1.2</Value>
+    </Setting>
+    <Setting Name="windowSize" Type="System.String" Scope="User">
+      <Value Profile="(Default)">1634, 904</Value>
+    </Setting>
+    <Setting Name="canSpeech" Type="System.String" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="linkWaveFilePath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">D:\Documents\GitHub\SyncRoomChatTool\SyncRoomChatTool\bin\Debug\link.wav</Value>
+    </Setting>
+  </Settings>
 </SettingsFile>

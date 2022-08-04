@@ -117,25 +117,13 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <metadata name="menuStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+  <metadata name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>
-  <metadata name="statusStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>152, 17</value>
+  <metadata name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
   </metadata>
-  <data name="richTextBox1.Text" xml:space="preserve">
-    <value>・SyncRoomのチャットが表示されます。今見えてるログがまんま表示されてます。
-・フォントサイズはツールメニューから変更できます。
-・Ctrl+マウスホイールでログ表示の倍率設定できます。
-・SyncRoomの起動とチャットウィンドウの表示を待機＆監視します。
-・設定から監視タイミングを10ミリ秒から10,000ミリ秒で設定出来ます。
-　長くすると制御が戻る時間が延びますが、その分スピーチは取りこぼします。
-・メニューのスピーチから、スピーチ自体のオンオフが出来ます。
-・チャットウィンドウを閉じると、チャットウィンドウ待機モードになり、制御が戻ります。
-　ですが、他の人がチャット開くとまた制御取られます。
-・チャットウィンドウを開いたままだと、ずっとチャットウィンドウにフォーカスします。</value>
-  </data>
   <metadata name="fontDialog1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>289, 17</value>
+    <value>130, 17</value>
   </metadata>
 </root>

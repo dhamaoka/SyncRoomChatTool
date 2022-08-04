@@ -8,16 +8,16 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SyncRoomChatTool.Properties {
+namespace SyncRoomChatTool {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.2.0.0")]
-    internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
+    internal sealed partial class App : global::System.Configuration.ApplicationSettingsBase {
         
-        private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
+        private static App defaultInstance = ((App)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new App())));
         
-        public static Settings Default {
+        public static App Default {
             get {
                 return defaultInstance;
             }
@@ -25,10 +25,10 @@ namespace SyncRoomChatTool.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("750")]
-        public string waitTiming {
+        [global::System.Configuration.DefaultSettingValueAttribute("500")]
+        public decimal waitTiming {
             get {
-                return ((string)(this["waitTiming"]));
+                return ((decimal)(this["waitTiming"]));
             }
             set {
                 this["waitTiming"] = value;
@@ -37,10 +37,10 @@ namespace SyncRoomChatTool.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("メイリオ, 15pt")]
-        public string logFont {
+        [global::System.Configuration.DefaultSettingValueAttribute("MS UI Gothic, 10.2pt")]
+        public global::System.Drawing.Font logFont {
             get {
-                return ((string)(this["logFont"]));
+                return ((global::System.Drawing.Font)(this["logFont"]));
             }
             set {
                 this["logFont"] = value;
@@ -49,10 +49,10 @@ namespace SyncRoomChatTool.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1.2")]
-        public string zoomFacter {
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public float zoomFacter {
             get {
-                return ((string)(this["zoomFacter"]));
+                return ((float)(this["zoomFacter"]));
             }
             set {
                 this["zoomFacter"] = value;
@@ -61,10 +61,10 @@ namespace SyncRoomChatTool.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1634, 904")]
-        public string windowSize {
+        [global::System.Configuration.DefaultSettingValueAttribute("958, 629")]
+        public global::System.Drawing.Size windowSize {
             get {
-                return ((string)(this["windowSize"]));
+                return ((global::System.Drawing.Size)(this["windowSize"]));
             }
             set {
                 this["windowSize"] = value;
@@ -74,9 +74,9 @@ namespace SyncRoomChatTool.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public string canSpeech {
+        public bool canSpeech {
             get {
-                return ((string)(this["canSpeech"]));
+                return ((bool)(this["canSpeech"]));
             }
             set {
                 this["canSpeech"] = value;
@@ -85,7 +85,7 @@ namespace SyncRoomChatTool.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("D:\\Documents\\GitHub\\SyncRoomChatTool\\SyncRoomChatTool\\bin\\Debug\\link.wav")]
+        [global::System.Configuration.DefaultSettingValueAttribute("link.wav")]
         public string linkWaveFilePath {
             get {
                 return ((string)(this["linkWaveFilePath"]));
