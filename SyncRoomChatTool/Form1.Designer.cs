@@ -37,6 +37,7 @@
             this.MenuOption = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuSpeech = new System.Windows.Forms.ToolStripMenuItem();
             this.Menu_EnebleSpeech = new System.Windows.Forms.ToolStripMenuItem();
+            this.Menu_UseVoiceBox = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
@@ -57,6 +58,7 @@
             this.MenuSpeech});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
+            this.menuStrip1.Padding = new System.Windows.Forms.Padding(6, 2, 0, 2);
             this.menuStrip1.Size = new System.Drawing.Size(940, 28);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
@@ -88,21 +90,22 @@
             // MenuFont
             // 
             this.MenuFont.Name = "MenuFont";
-            this.MenuFont.Size = new System.Drawing.Size(224, 26);
+            this.MenuFont.Size = new System.Drawing.Size(150, 26);
             this.MenuFont.Text = "フォント(&F)";
             this.MenuFont.Click += new System.EventHandler(this.MenuFont_Click);
             // 
             // MenuOption
             // 
             this.MenuOption.Name = "MenuOption";
-            this.MenuOption.Size = new System.Drawing.Size(224, 26);
+            this.MenuOption.Size = new System.Drawing.Size(150, 26);
             this.MenuOption.Text = "設定(&O)";
             this.MenuOption.Click += new System.EventHandler(this.MenuOption_Click);
             // 
             // MenuSpeech
             // 
             this.MenuSpeech.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.Menu_EnebleSpeech});
+            this.Menu_EnebleSpeech,
+            this.Menu_UseVoiceBox});
             this.MenuSpeech.Name = "MenuSpeech";
             this.MenuSpeech.Size = new System.Drawing.Size(84, 24);
             this.MenuSpeech.Text = "スピーチ(&S)";
@@ -116,6 +119,16 @@
             this.Menu_EnebleSpeech.Size = new System.Drawing.Size(224, 26);
             this.Menu_EnebleSpeech.Text = "スピーチさせる(&E)";
             this.Menu_EnebleSpeech.Click += new System.EventHandler(this.Menu_EnebleSpeech_Click);
+            // 
+            // Menu_UseVoiceBox
+            // 
+            this.Menu_UseVoiceBox.Checked = true;
+            this.Menu_UseVoiceBox.CheckOnClick = true;
+            this.Menu_UseVoiceBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.Menu_UseVoiceBox.Name = "Menu_UseVoiceBox";
+            this.Menu_UseVoiceBox.Size = new System.Drawing.Size(224, 26);
+            this.Menu_UseVoiceBox.Text = "VOICEVOXを使う(&V)";
+            this.Menu_UseVoiceBox.Click += new System.EventHandler(this.Menu_VoiceBox_Click);
             // 
             // statusStrip1
             // 
@@ -144,8 +157,9 @@
             this.panel1.Controls.Add(this.richTextBox1);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel1.Location = new System.Drawing.Point(0, 28);
+            this.panel1.Margin = new System.Windows.Forms.Padding(2);
             this.panel1.Name = "panel1";
-            this.panel1.Padding = new System.Windows.Forms.Padding(7);
+            this.panel1.Padding = new System.Windows.Forms.Padding(8, 8, 8, 8);
             this.panel1.Size = new System.Drawing.Size(940, 532);
             this.panel1.TabIndex = 3;
             // 
@@ -156,11 +170,12 @@
             this.richTextBox1.Cursor = System.Windows.Forms.Cursors.Default;
             this.richTextBox1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.richTextBox1.Font = new System.Drawing.Font("游ゴシック", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.richTextBox1.Location = new System.Drawing.Point(7, 7);
+            this.richTextBox1.Location = new System.Drawing.Point(8, 8);
+            this.richTextBox1.Margin = new System.Windows.Forms.Padding(2);
             this.richTextBox1.Name = "richTextBox1";
             this.richTextBox1.ReadOnly = true;
             this.richTextBox1.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.richTextBox1.Size = new System.Drawing.Size(926, 518);
+            this.richTextBox1.Size = new System.Drawing.Size(924, 516);
             this.richTextBox1.TabIndex = 3;
             this.richTextBox1.Text = resources.GetString("richTextBox1.Text");
             this.richTextBox1.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.RichTextBox1_LinkClicked);
@@ -175,6 +190,7 @@
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "Form1";
             this.Text = "SyncRoomChatTool";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
@@ -203,7 +219,8 @@
         public System.Windows.Forms.ToolStripMenuItem MenuTool;
         private System.Windows.Forms.ToolStripMenuItem MenuFont;
         private System.Windows.Forms.FontDialog fontDialog1;
-        public System.Windows.Forms.ToolStripMenuItem Menu_EnebleSpeech;
+        private System.Windows.Forms.ToolStripMenuItem Menu_UseVoiceBox;
+        private System.Windows.Forms.ToolStripMenuItem Menu_EnebleSpeech;
     }
 }
 

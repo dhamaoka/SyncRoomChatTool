@@ -20,5 +20,14 @@
     <Setting Name="linkWaveFilePath" Type="System.String" Scope="User">
       <Value Profile="(Default)">link.wav</Value>
     </Setting>
+    <Setting Name="UseVoiceBox" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="VoiceBoxPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="VoiceBoxAddress" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://localhost:50021</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

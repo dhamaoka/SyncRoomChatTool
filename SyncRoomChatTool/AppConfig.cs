@@ -15,6 +15,8 @@ namespace SyncRoomChatTool
     {
         public decimal waitTiming;
         public string linkWaveFilePath;
+        public string voiceBoxPath;
+        public string voiceBoxAddress;
 
         public AppConfig()
         {
@@ -24,27 +26,38 @@ namespace SyncRoomChatTool
 
         private void ButtonCancel_Click(object sender, EventArgs e)
         {
-            this.DialogResult = DialogResult.Cancel;
-            this.Close();
+            DialogResult = DialogResult.Cancel;
+            Close();
         }
 
         private void ButtonOK_Click(object sender, EventArgs e)
         {
-            this.DialogResult = DialogResult.OK;
+            DialogResult = DialogResult.OK;
             waitTiming = numWait.Value;
             linkWaveFilePath = textBox1.Text;
-            this.Close();
+            Close();
         }
 
         private void AppConfig_Load(object sender, EventArgs e)
         {
-            this.numWait.Value = App.Default.waitTiming;
-            this.textBox1.Text = App.Default.linkWaveFilePath;
+            numWait.Value = App.Default.waitTiming;
+            textBox1.Text = App.Default.linkWaveFilePath;
+            textBox2.Text = App.Default.VoiceBoxPath;
+            if (string.IsNullOrEmpty(App.Default.VoiceBoxAddress))
+            {
+                textBox3.Text = "http://localhost:50021";
+                App.Default.VoiceBoxAddress = "http://localhost:50021";
+                App.Default.Save();
+            }
+            else
+            {
+                textBox3.Text = App.Default.VoiceBoxAddress;
+            }
         }
 
         private void Button1_Click(object sender, EventArgs e)
         {
-            string appPath = System.Windows.Forms.Application.StartupPath;
+            string appPath = Application.StartupPath;
             string absolutePath = Path.Combine(appPath, "link.wav");
 
             OpenFileDialog dlg = new OpenFileDialog();
@@ -56,38 +69,69 @@ namespace SyncRoomChatTool
 
             if (dlg.ShowDialog() == DialogResult.OK)
             {
-                this.linkWaveFilePath = dlg.FileName;
-                textBox1.Text = this.linkWaveFilePath;
+                linkWaveFilePath = dlg.FileName;
+                textBox1.Text = linkWaveFilePath;
                 dlg.Dispose();
             }
         }
 
         private void AppConfig_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (this.DialogResult == DialogResult.OK)
+            if (DialogResult == DialogResult.OK)
             {
-                if (string.IsNullOrEmpty(this.linkWaveFilePath))
-                {
-                    this.Dispose();
-                }
-                else
+                if (!string.IsNullOrEmpty(linkWaveFilePath)) 
                 {
                     if (!File.Exists(linkWaveFilePath))
                     {
                         e.Cancel = true;
                         MessageBox.Show("ファイルが見つかりません。", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                        return;
                     }
-                    else
+                }
+
+                if (!string.IsNullOrEmpty(voiceBoxPath))
+                {
+                    if (!File.Exists(voiceBoxPath))
                     {
-                        this.Dispose();
+                        e.Cancel = true;
+                        MessageBox.Show("ファイルが見つかりません。", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                        return;
                     }
                 }
             }
+            Dispose();
         }
 
-        private void textBox1_TextChanged(object sender, EventArgs e)
+        private void TextBox1_TextChanged(object sender, EventArgs e)
         {
-            this.linkWaveFilePath = textBox1.Text;
+            linkWaveFilePath = textBox1.Text;
+        }
+
+        private void TextBox2_TextChanged(object sender, EventArgs e)
+        {
+            voiceBoxPath = textBox2.Text;   
+        }
+
+        private void TextBox3_TextChanged(object sender, EventArgs e)
+        {
+            voiceBoxAddress = textBox3.Text;
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+
+            dlg.FileName = "run.exe";
+            dlg.Title = "VOICEBOXのEngineを指定します。";
+            dlg.InitialDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs\\VOICEVOX");
+            dlg.Filter = "実行ファイル|*.exe";
+
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                voiceBoxPath = dlg.FileName;
+                textBox2.Text = voiceBoxPath;
+                dlg.Dispose();
+            }
         }
     }
 }

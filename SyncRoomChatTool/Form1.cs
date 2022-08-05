@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Speech.Synthesis;
 using System.Media;
 using System.IO;
+using System.Net;
 
 namespace SyncRoomChatTool
 {
@@ -27,34 +28,43 @@ namespace SyncRoomChatTool
 
         private static UIAutomationLib ui = new UIAutomationLib();
 
-        private static decimal waitTiming = 500;
-        private static string linkWaveFilePath = "";
+        private static readonly string voiceVoxDefaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs\\VOICEVOX\\run.exe");
 
         private void Form1_Load(object sender, EventArgs e)
         {
             Menu_EnebleSpeech.Checked = App.Default.canSpeech;
+            Menu_UseVoiceBox.Checked = App.Default.UseVoiceBox;
             richTextBox1.LanguageOption = RichTextBoxLanguageOptions.UIFonts;
             richTextBox1.Font = App.Default.logFont;
             richTextBox1.ZoomFactor = App.Default.zoomFacter;
             if (App.Default.waitTiming < 100)
             {
-                waitTiming = 100;
-                App.Default.waitTiming = waitTiming;
-            }
-            else
-            {
-                waitTiming = App.Default.waitTiming;
+                App.Default.waitTiming = 100;
             }
 
+            //VOICEVOXのパス設定がされていなくて
+            if (String.IsNullOrEmpty( App.Default.VoiceBoxPath))
+            {
+                //VOICEVOXデフォルトパスにRun.exeが居る＝インストールされているとみなし、
+                if (File.Exists(voiceVoxDefaultPath))
+                {
+                    //設定に保存する＝VOICEVOXが使えると見なす。
+                    App.Default.VoiceBoxPath = voiceVoxDefaultPath;
+                }
+            }
+
+            //存在しないリンクが貼られてた際の固定音声ファイルが指定されている＝裏で直接コンフィグファイルをイジった想定
             if (!File.Exists(App.Default.linkWaveFilePath))
             {
-                linkWaveFilePath = "";
+                //固定ファイルなしとする。
                 App.Default.linkWaveFilePath = "";
             }
-            else
+
+            if (string.IsNullOrEmpty(App.Default.VoiceBoxAddress))
             {
-                linkWaveFilePath = App.Default.linkWaveFilePath;
+                App.Default.VoiceBoxAddress = "http://localhost:50021";
             }
+
             App.Default.Save();
 
             this.Size = App.Default.windowSize;
@@ -75,7 +85,7 @@ namespace SyncRoomChatTool
             while (true)
             {
                 TargetProcess tp = new TargetProcess(ProcessName);  //結構プロセス生きてるか調べるかなと思って別クラスにしたけど、監視タスク内でしか見てねぇ。
-                await Task.Delay((int)waitTiming);
+                await Task.Delay((int)App.Default.waitTiming);
 
                 string toolMessage;
 
@@ -132,9 +142,9 @@ namespace SyncRoomChatTool
                                         if (IsLink(newComment))
                                         {
                                             commentText = "リンクが張られました。";
-                                            if (File.Exists(linkWaveFilePath))
+                                            if (File.Exists(App.Default.linkWaveFilePath))
                                             {
-                                                SoundPlayer player = new System.Media.SoundPlayer(linkWaveFilePath);
+                                                SoundPlayer player = new SoundPlayer(App.Default.linkWaveFilePath);
                                                 //非同期再生する
                                                 player.Play();
                                                 lastComment = newComment;
@@ -147,13 +157,23 @@ namespace SyncRoomChatTool
                                             commentText = GetComment(newComment, CommentDivider.Comment);
                                         }
 
-                                        //リンクじゃないコメントで、コロンで区切った最後のコメントが来る。これ以降にあれやこれや入れる。
 
-                                        //空行チェック
+                                        //空行でない & 連続同一コメントでないこと。
                                         if (IsBlank(newComment) == false && lastComment != newComment)
                                         {
+
+                                            //日本語が含まれているか（ちょっと判定は微妙だけど）
+                                            int lang = 0;
+                                            if (UseOnlyEnglish(newComment))
+                                            {
+                                                //Ziraがしゃべる。VOICEVOXを使うとしてもだ。
+                                                lang = 1;
+                                            }
+                                            //ToDo:リンクじゃないコメントで、コロンで区切った最後のコメントが来る。これ以降にあれやこれや入れる。
+
+
                                             //音声用の別処理をぶっ込む。
-                                            SpeechSynthe(commentText);
+                                            SpeechSynthe(commentText,lang);
                                         }
                                     }
 
@@ -218,14 +238,86 @@ namespace SyncRoomChatTool
             return false;
         }
 
-        private static void SpeechSynthe(string commentText)
+        private static bool UseOnlyEnglish(string newComment)
+        {
+            //英数のみかのチェックというか、指定のワードが入ってるかどうか（主に日本語）
+            Match match;
+            match = Regex.Match(newComment, "[ぁ-んァ-ヶｱ-ﾝﾞﾟ一-龠！-／：-＠［-｀｛-～、-〜”’・]");
+            if (match.Success)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        private static void SpeechSynthe(string commentText, int lang = 0)
         {
             string speechComment = commentText;
 
-            SpeechSynthesizer synth = new SpeechSynthesizer();
+            //メッセージ（情報）を鳴らす
+            SystemSounds.Asterisk.Play();
+
+            if (App.Default.UseVoiceBox == true && lang == 0)
+            {
+                SpeechVOICEVOX(commentText);
+                return;
+            }
+
+            SpeechSynthesizer synth = new SpeechSynthesizer
+            {
+                Rate = -1
+            };
+
+            //lang == 0 日本語でしゃべる。VOICEVOXを使うかどうかで処理分岐。
+            if (lang == 0)
+            {
+                synth.SelectVoice("Microsoft Haruka Desktop");
+            }
+            else
+            {
+                synth.SelectVoice("Microsoft Zira Desktop");
+            }
+
             synth.SpeakAsync(speechComment);
         }
 
+
+        private static void SpeechVOICEVOX(string commentText)
+        {
+            string baseUrl = App.Default.VoiceBoxAddress;
+            string url;
+
+            if (string.IsNullOrEmpty(baseUrl))
+            {
+                Debug.WriteLine("URLが入ってない");
+                return;
+            }
+
+            if (baseUrl.Substring(baseUrl.Length - 1, 1) != "/")
+            {
+                baseUrl += "/";
+            }
+
+            url = baseUrl + $"audio_query?text='{commentText}'&speaker=2";
+
+            var client = new ServiceHttpClient(url);
+            String QueryResponce = "";
+            var ret = client.Post(ref QueryResponce, "");
+
+            if (ret.StatusCode.Equals(HttpStatusCode.OK))
+            {
+                url = baseUrl + $"synthesis?speaker=2";
+                client = new ServiceHttpClient(url);
+                string wavFile = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                ret = client.Post(ref QueryResponce, wavFile);
+                if (ret.StatusCode.Equals(HttpStatusCode.OK))
+                {
+                    SoundPlayer player = new SoundPlayer(wavFile);
+                    //非同期再生する
+                    player.Play();
+                }
+            }
+        }
 
         private void MenuClose_Click(object sender, EventArgs e)
         {
@@ -243,10 +335,10 @@ namespace SyncRoomChatTool
             AppConfig apConf = new AppConfig();
             if (apConf.ShowDialog() == DialogResult.OK)
             {
-                waitTiming = apConf.waitTiming;
-                linkWaveFilePath = apConf.linkWaveFilePath;
-                App.Default.linkWaveFilePath = linkWaveFilePath;
-                App.Default.waitTiming = waitTiming;
+                App.Default.linkWaveFilePath = apConf.linkWaveFilePath;
+                App.Default.waitTiming = apConf.waitTiming;
+                App.Default.VoiceBoxAddress = apConf.voiceBoxAddress;
+                App.Default.VoiceBoxPath = apConf.voiceBoxPath;
                 App.Default.Save();
             }
         }
@@ -268,7 +360,6 @@ namespace SyncRoomChatTool
             App.Default.zoomFacter = richTextBox1.ZoomFactor;
             App.Default.logFont = richTextBox1.Font;
             App.Default.windowSize = this.Size;
-            App.Default.waitTiming = waitTiming;
             App.Default.Save();
         }
 
@@ -283,6 +374,12 @@ namespace SyncRoomChatTool
         private void Menu_EnebleSpeech_Click(object sender, EventArgs e)
         {
             App.Default.canSpeech = Menu_EnebleSpeech.Checked;
+            App.Default.Save();
+        }
+
+        private void Menu_VoiceBox_Click(object sender, EventArgs e)
+        {
+            App.Default.UseVoiceBox = Menu_UseVoiceBox.Checked;
             App.Default.Save();
         }
     }

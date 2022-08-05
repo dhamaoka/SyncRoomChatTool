@@ -94,5 +94,41 @@ namespace SyncRoomChatTool {
                 this["linkWaveFilePath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool UseVoiceBox {
+            get {
+                return ((bool)(this["UseVoiceBox"]));
+            }
+            set {
+                this["UseVoiceBox"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string VoiceBoxPath {
+            get {
+                return ((string)(this["VoiceBoxPath"]));
+            }
+            set {
+                this["VoiceBoxPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost:50021")]
+        public string VoiceBoxAddress {
+            get {
+                return ((string)(this["VoiceBoxAddress"]));
+            }
+            set {
+                this["VoiceBoxAddress"] = value;
+            }
+        }
     }
 }
