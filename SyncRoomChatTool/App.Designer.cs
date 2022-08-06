@@ -130,5 +130,17 @@ namespace SyncRoomChatTool {
                 this["VoiceVoxAddress"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("30")]
+        public decimal cutLength {
+            get {
+                return ((decimal)(this["cutLength"]));
+            }
+            set {
+                this["cutLength"] = value;
+            }
+        }
     }
 }

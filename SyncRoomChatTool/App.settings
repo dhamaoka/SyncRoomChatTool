@@ -29,5 +29,8 @@
     <Setting Name="VoiceVoxAddress" Type="System.String" Scope="User">
       <Value Profile="(Default)">http://localhost:50021</Value>
     </Setting>
+    <Setting Name="cutLength" Type="System.Decimal" Scope="User">
+      <Value Profile="(Default)">30</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

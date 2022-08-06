@@ -11,8 +11,6 @@ using System.IO;
 using System.Net;
 using Newtonsoft.Json;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
-using Newtonsoft.Json.Linq;
 
 namespace SyncRoomChatTool
 {
@@ -23,6 +21,8 @@ namespace SyncRoomChatTool
             Comment = 1,
             UserName = 2
         }
+
+        private static readonly int commentLimit = (int)App.Default.cutLength;
 
         public Form1()
         {
@@ -67,6 +67,10 @@ namespace SyncRoomChatTool
             if (App.Default.waitTiming < 100)
             {
                 App.Default.waitTiming = 100;
+            }
+            if (App.Default.cutLength < 20)
+            {
+                App.Default.cutLength = 20;
             }
 
             //VOICEVOXのパス設定がされていなくて（初回起動時想定。デフォルトコンフィグは空なので）
@@ -131,7 +135,7 @@ namespace SyncRoomChatTool
                 var ret = client.Get();
                 if (ret != null)
                 {
-                    //todo:Jsonのデシリアライズ。StyleIdの一覧を作る。
+                    //Jsonのデシリアライズ。StyleIdの一覧を作る。
                     List<SpeakerFromAPI> myDeserializedClass = JsonConvert.DeserializeObject<List<SpeakerFromAPI>>(ret.ToString());
 
                     foreach (SpeakerFromAPI speaker in myDeserializedClass)
@@ -396,6 +400,47 @@ namespace SyncRoomChatTool
                     SpeechFlg = item.SpeechFlg;
                     break;
                 }
+
+                //8888対応
+                match = Regex.Match(Comment, @"(８|8){2,}", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    Comment = Comment.Replace(match.ToString(), "、パチパチパチ");
+                    Lang = 0;
+                }
+
+                //8888対応
+                match = Regex.Match(Comment, @"(８|8){1,}", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    Comment = Comment.Replace(match.ToString(), "、パチ");
+                    Lang = 0;
+                }
+
+                //ｗｗｗ対応
+                match = Regex.Match(Comment, @"(ｗ|w){2,}", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    Comment = Comment.Replace(match.ToString(), "、ふふっ");
+                    Lang = 0;
+                }
+
+                //行末のｗｗｗ対応
+                match = Regex.Match(Comment, @"(ｗ|w){1,}$", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    Comment = Comment.Replace(match.ToString(), "、ふふっ");
+                    Lang = 0;
+                }
+
+                //文字数制限
+                if (Comment.Length > commentLimit)
+                {
+                    string[] cutText = { "、以下略。", ", Omitted below" };
+                    Comment = Comment.Substring(0,commentLimit - 1);
+                    Comment += cutText[Lang];
+                }
+
             }
         }
 
@@ -478,11 +523,15 @@ namespace SyncRoomChatTool
 
             if (string.IsNullOrEmpty(baseUrl))
             {
+                /*
                 Debug.WriteLine("URLが入ってない");
                 SpeechSynthesizer synth = new SpeechSynthesizer();
                 synth.SelectVoice("Microsoft Haruka Desktop");
                 synth.SpeakAsync($"エラーが発生しています。ベースURLが入っていません。");
                 return;
+                */
+                //たまに消えるよね、君。
+                baseUrl = "http://localhost:50021";
             }
 
             if (baseUrl.Substring(baseUrl.Length - 1, 1) != "/")
@@ -529,6 +578,7 @@ namespace SyncRoomChatTool
             {
                 App.Default.linkWaveFilePath = apConf.linkWaveFilePath;
                 App.Default.waitTiming = apConf.waitTiming;
+                App.Default.cutLength = apConf.cutLength;
                 App.Default.VoiceVoxAddress = apConf.voiceVoxAddress;
                 App.Default.VoiceVoxPath = apConf.voiceVoxPath;
                 App.Default.Save();
@@ -578,6 +628,8 @@ namespace SyncRoomChatTool
         private void Menu_Help_Click(object sender, EventArgs e)
         {
             Help help = new Help();
+            help.Width = (int)Math.Floor(this.Width * 0.9);
+            help.Height = (int)Math.Floor(this.Height * 0.9);
 
             help.ShowDialog();
         }

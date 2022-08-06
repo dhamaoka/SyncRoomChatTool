@@ -14,6 +14,7 @@ namespace SyncRoomChatTool
     public partial class AppConfig : Form
     {
         public decimal waitTiming;
+        public decimal cutLength;
         public string linkWaveFilePath;
         public string voiceVoxPath;
         public string voiceVoxAddress;
@@ -34,6 +35,7 @@ namespace SyncRoomChatTool
         {
             DialogResult = DialogResult.OK;
             waitTiming = numWait.Value;
+            cutLength = numCut.Value;
             linkWaveFilePath = textBox1.Text;
             Close();
         }
@@ -41,6 +43,7 @@ namespace SyncRoomChatTool
         private void AppConfig_Load(object sender, EventArgs e)
         {
             numWait.Value = App.Default.waitTiming;
+            numCut.Value = App.Default.cutLength;
             textBox1.Text = App.Default.linkWaveFilePath;
             textBox2.Text = App.Default.VoiceVoxPath;
             if (string.IsNullOrEmpty(App.Default.VoiceVoxAddress))
