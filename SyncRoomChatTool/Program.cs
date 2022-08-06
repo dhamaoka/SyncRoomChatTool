@@ -121,48 +121,32 @@ namespace SyncRoomChatTool
         }
     }
 
-
-
     public class TargetProcess
     {
         private readonly Process targetProcess;
+        public bool IsAlive = true;
+        public int Id = 0;
+        public Process Proc;
+        public IntPtr Handle;
 
         public TargetProcess(string pName)
         {
-            Process[] ps = System.Diagnostics.Process.GetProcessesByName(pName);
+            Process[] ps = Process.GetProcessesByName(pName);
             foreach (Process p in ps)
             {
                 targetProcess = p;
                 break;
             }
-        }
 
-        public bool IsAlive()
-        {
             if (targetProcess == null)
             {
-                return false;
+                IsAlive = false;
+                return;
             }
-            else
-            {
-                return true;
-            }
-        }
 
-        public int Id()
-        {
-            return targetProcess.Id;
-        }
-
-
-        public Process Proc()
-        {
-            return targetProcess;
-        }
-
-        public IntPtr Handle()
-        {
-            return targetProcess.Handle;
+            Id = targetProcess.Id;
+            Proc = targetProcess;
+            Handle = targetProcess.Handle;
         }
     }
 

@@ -41,7 +41,7 @@ namespace SyncRoomChatTool
         /// 引数付きのコンストラクタ。こちらを使用します。
         /// 引数には正しいURLが入っていることが前提です。
         /// </summary>
-        /// <param name="baseUrl">ベースのURL</param>
+        /// <param Name="requestAddress">リクエストURL</param>
         public ServiceHttpClient(string requestAddress)
         {
             this.requestAddress = requestAddress;
@@ -52,9 +52,51 @@ namespace SyncRoomChatTool
         }
 
         /// <summary>
+        /// 情報がURLに載ったGETリクエストを送受信するサンプル。
+        /// </summary>
+        /// <param Name="someId">何かのID</param>
+        /// <returns>正常：レスポンスのボディ / 異常：null</returns>
+        public string Get()
+        {
+            String requestEndPoint = requestAddress;
+            HttpRequestMessage request = this.CreateRequest(HttpMethod.Get, requestEndPoint);
+
+            string resBodyStr;
+            HttpStatusCode resStatusCoode = HttpStatusCode.NotFound;
+            Task<HttpResponseMessage> response;
+            // 通信実行。メンバ変数でhttpClientを持っているので、using(～)で囲いません。囲うと通信後にオブジェクトが破棄されます。
+            // 引数にrequestを取る場合はGetAsyncやPostAsyncでなくSendAsyncメソッドになります。
+            // 戻り値はTask<HttpResponseMessage>で、変数名.ResultとするとSystem.Net.Http.HttpResponseMessageクラスが取れます。
+            try
+            {
+                response = httpClient.SendAsync(request);
+                resBodyStr = response.Result.Content.ReadAsStringAsync().Result;
+                resStatusCoode = response.Result.StatusCode;
+            }
+            catch (HttpRequestException e)
+            {
+                // UNDONE: 通信失敗のエラー処理
+                return null;
+            }
+
+            if (!resStatusCoode.Equals(HttpStatusCode.OK))
+            {
+                // UNDONE: レスポンスが200 OK以外の場合のエラー処理
+                return null;
+            }
+            if (String.IsNullOrEmpty(resBodyStr))
+            {
+                // UNDONE: レスポンスのボディが空の場合のエラー処理
+                return null;
+            }
+            // 中身のチェックなどを経て終了。
+            return resBodyStr;
+        }
+
+        /// <summary>
         /// VOICEVOX用に改修。元はキーをJsonにまでしてくれてたけど、それは要らんので。喚び元でやれと。
         /// </summary>
-        /// <param name="QueryResponce"></param>
+        /// <param Name="QueryResponce"></param>
         /// <returns>正常：レスポンスのボディ / 異常：null</returns>
         public HttpResponseMessage Post(ref string QueryResponce, string BinaryFile)
         {
@@ -134,8 +176,8 @@ namespace SyncRoomChatTool
         /// <summary>
         /// HTTPリクエストメッセージを生成する内部メソッドです。
         /// </summary>
-        /// <param name="httpMethod">HTTPメソッドのオブジェクト</param>
-        /// <param name="requestEndPoint">通信先のURL</param>
+        /// <param Name="httpMethod">HTTPメソッドのオブジェクト</param>
+        /// <param Name="requestEndPoint">通信先のURL</param>
         /// <returns>HttpRequestMessage</returns>
         private HttpRequestMessage CreateRequest(HttpMethod httpMethod, string requestEndPoint)
         {
@@ -146,7 +188,7 @@ namespace SyncRoomChatTool
         /// <summary>
         /// HTTPリクエストにヘッダーを追加する内部メソッドです。
         /// </summary>
-        /// <param name="request">リクエスト</param>
+        /// <param Name="request">リクエスト</param>
         /// <returns>HttpRequestMessage</returns>
         private HttpRequestMessage AddHeaders(HttpRequestMessage request)
         {

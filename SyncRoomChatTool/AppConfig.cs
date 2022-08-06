@@ -15,8 +15,8 @@ namespace SyncRoomChatTool
     {
         public decimal waitTiming;
         public string linkWaveFilePath;
-        public string voiceBoxPath;
-        public string voiceBoxAddress;
+        public string voiceVoxPath;
+        public string voiceVoxAddress;
 
         public AppConfig()
         {
@@ -42,16 +42,16 @@ namespace SyncRoomChatTool
         {
             numWait.Value = App.Default.waitTiming;
             textBox1.Text = App.Default.linkWaveFilePath;
-            textBox2.Text = App.Default.VoiceBoxPath;
-            if (string.IsNullOrEmpty(App.Default.VoiceBoxAddress))
+            textBox2.Text = App.Default.VoiceVoxPath;
+            if (string.IsNullOrEmpty(App.Default.VoiceVoxAddress))
             {
                 textBox3.Text = "http://localhost:50021";
-                App.Default.VoiceBoxAddress = "http://localhost:50021";
+                App.Default.VoiceVoxAddress = "http://localhost:50021";
                 App.Default.Save();
             }
             else
             {
-                textBox3.Text = App.Default.VoiceBoxAddress;
+                textBox3.Text = App.Default.VoiceVoxAddress;
             }
         }
 
@@ -89,9 +89,9 @@ namespace SyncRoomChatTool
                     }
                 }
 
-                if (!string.IsNullOrEmpty(voiceBoxPath))
+                if (!string.IsNullOrEmpty(voiceVoxPath))
                 {
-                    if (!File.Exists(voiceBoxPath))
+                    if (!File.Exists(voiceVoxPath))
                     {
                         e.Cancel = true;
                         MessageBox.Show("ファイルが見つかりません。", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Stop);
@@ -109,12 +109,12 @@ namespace SyncRoomChatTool
 
         private void TextBox2_TextChanged(object sender, EventArgs e)
         {
-            voiceBoxPath = textBox2.Text;   
+            voiceVoxPath = textBox2.Text;   
         }
 
         private void TextBox3_TextChanged(object sender, EventArgs e)
         {
-            voiceBoxAddress = textBox3.Text;
+            voiceVoxAddress = textBox3.Text;
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -122,14 +122,14 @@ namespace SyncRoomChatTool
             OpenFileDialog dlg = new OpenFileDialog();
 
             dlg.FileName = "run.exe";
-            dlg.Title = "VOICEBOXのEngineを指定します。";
+            dlg.Title = "VOICEVOXのEngineを指定します。";
             dlg.InitialDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs\\VOICEVOX");
             dlg.Filter = "実行ファイル|*.exe";
 
             if (dlg.ShowDialog() == DialogResult.OK)
             {
-                voiceBoxPath = dlg.FileName;
-                textBox2.Text = voiceBoxPath;
+                voiceVoxPath = dlg.FileName;
+                textBox2.Text = voiceVoxPath;
                 dlg.Dispose();
             }
         }

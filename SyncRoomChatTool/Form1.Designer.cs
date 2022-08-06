@@ -10,7 +10,7 @@
         /// <summary>
         /// 使用中のリソースをすべてクリーンアップします。
         /// </summary>
-        /// <param name="disposing">マネージド リソースを破棄する場合は true を指定し、その他の場合は false を指定します。</param>
+        /// <param Name="disposing">マネージド リソースを破棄する場合は true を指定し、その他の場合は false を指定します。</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -37,13 +37,14 @@
             this.MenuOption = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuSpeech = new System.Windows.Forms.ToolStripMenuItem();
             this.Menu_EnebleSpeech = new System.Windows.Forms.ToolStripMenuItem();
-            this.Menu_UseVoiceBox = new System.Windows.Forms.ToolStripMenuItem();
+            this.Menu_UseVoiceVox = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
             this.panel1 = new System.Windows.Forms.Panel();
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.fontDialog1 = new System.Windows.Forms.FontDialog();
+            this.Menu_Help = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -55,10 +56,10 @@
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.MenuFile,
             this.MenuTool,
-            this.MenuSpeech});
+            this.MenuSpeech,
+            this.Menu_Help});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Padding = new System.Windows.Forms.Padding(6, 2, 0, 2);
             this.menuStrip1.Size = new System.Drawing.Size(940, 28);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
@@ -105,7 +106,7 @@
             // 
             this.MenuSpeech.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.Menu_EnebleSpeech,
-            this.Menu_UseVoiceBox});
+            this.Menu_UseVoiceVox});
             this.MenuSpeech.Name = "MenuSpeech";
             this.MenuSpeech.Size = new System.Drawing.Size(84, 24);
             this.MenuSpeech.Text = "スピーチ(&S)";
@@ -120,15 +121,15 @@
             this.Menu_EnebleSpeech.Text = "スピーチさせる(&E)";
             this.Menu_EnebleSpeech.Click += new System.EventHandler(this.Menu_EnebleSpeech_Click);
             // 
-            // Menu_UseVoiceBox
+            // Menu_UseVoiceVox
             // 
-            this.Menu_UseVoiceBox.Checked = true;
-            this.Menu_UseVoiceBox.CheckOnClick = true;
-            this.Menu_UseVoiceBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.Menu_UseVoiceBox.Name = "Menu_UseVoiceBox";
-            this.Menu_UseVoiceBox.Size = new System.Drawing.Size(224, 26);
-            this.Menu_UseVoiceBox.Text = "VOICEVOXを使う(&V)";
-            this.Menu_UseVoiceBox.Click += new System.EventHandler(this.Menu_VoiceBox_Click);
+            this.Menu_UseVoiceVox.Checked = true;
+            this.Menu_UseVoiceVox.CheckOnClick = true;
+            this.Menu_UseVoiceVox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.Menu_UseVoiceVox.Name = "Menu_UseVoiceVox";
+            this.Menu_UseVoiceVox.Size = new System.Drawing.Size(224, 26);
+            this.Menu_UseVoiceVox.Text = "VOICEVOXを使う(&V)";
+            this.Menu_UseVoiceVox.Click += new System.EventHandler(this.Menu_VoiceVox_Click);
             // 
             // statusStrip1
             // 
@@ -159,7 +160,7 @@
             this.panel1.Location = new System.Drawing.Point(0, 28);
             this.panel1.Margin = new System.Windows.Forms.Padding(2);
             this.panel1.Name = "panel1";
-            this.panel1.Padding = new System.Windows.Forms.Padding(8, 8, 8, 8);
+            this.panel1.Padding = new System.Windows.Forms.Padding(8);
             this.panel1.Size = new System.Drawing.Size(940, 532);
             this.panel1.TabIndex = 3;
             // 
@@ -179,7 +180,14 @@
             this.richTextBox1.TabIndex = 3;
             this.richTextBox1.Text = resources.GetString("richTextBox1.Text");
             this.richTextBox1.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.RichTextBox1_LinkClicked);
-            this.richTextBox1.TextChanged += new System.EventHandler(this.richTextBox1_TextChanged);
+            this.richTextBox1.TextChanged += new System.EventHandler(this.RichTextBox1_TextChanged);
+            // 
+            // Menu_Help
+            // 
+            this.Menu_Help.Name = "Menu_Help";
+            this.Menu_Help.Size = new System.Drawing.Size(79, 24);
+            this.Menu_Help.Text = "ヘルプ(&H)";
+            this.Menu_Help.Click += new System.EventHandler(this.Menu_Help_Click);
             // 
             // Form1
             // 
@@ -219,8 +227,9 @@
         public System.Windows.Forms.ToolStripMenuItem MenuTool;
         private System.Windows.Forms.ToolStripMenuItem MenuFont;
         private System.Windows.Forms.FontDialog fontDialog1;
-        private System.Windows.Forms.ToolStripMenuItem Menu_UseVoiceBox;
+        private System.Windows.Forms.ToolStripMenuItem Menu_UseVoiceVox;
         private System.Windows.Forms.ToolStripMenuItem Menu_EnebleSpeech;
+        private System.Windows.Forms.ToolStripMenuItem Menu_Help;
     }
 }
 

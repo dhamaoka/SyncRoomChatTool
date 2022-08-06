@@ -98,36 +98,36 @@ namespace SyncRoomChatTool {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool UseVoiceBox {
+        public bool UseVoiceVox {
             get {
-                return ((bool)(this["UseVoiceBox"]));
+                return ((bool)(this["UseVoiceVox"]));
             }
             set {
-                this["UseVoiceBox"] = value;
+                this["UseVoiceVox"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string VoiceBoxPath {
+        public string VoiceVoxPath {
             get {
-                return ((string)(this["VoiceBoxPath"]));
+                return ((string)(this["VoiceVoxPath"]));
             }
             set {
-                this["VoiceBoxPath"] = value;
+                this["VoiceVoxPath"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("http://localhost:50021")]
-        public string VoiceBoxAddress {
+        public string VoiceVoxAddress {
             get {
-                return ((string)(this["VoiceBoxAddress"]));
+                return ((string)(this["VoiceVoxAddress"]));
             }
             set {
-                this["VoiceBoxAddress"] = value;
+                this["VoiceVoxAddress"] = value;
             }
         }
     }

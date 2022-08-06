@@ -10,7 +10,7 @@
         /// <summary>
         /// Clean up any resources being used.
         /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        /// <param Name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -118,7 +118,7 @@
             this.textBox2.Name = "textBox2";
             this.textBox2.Size = new System.Drawing.Size(628, 22);
             this.textBox2.TabIndex = 6;
-            this.toolTip1.SetToolTip(this.textBox2, "VOICEBOXのEngineの場所を指定します。");
+            this.toolTip1.SetToolTip(this.textBox2, "VOICEVOXのEngineの場所を指定します。");
             this.textBox2.TextChanged += new System.EventHandler(this.TextBox2_TextChanged);
             // 
             // textBox3
@@ -130,7 +130,7 @@
             this.textBox3.Size = new System.Drawing.Size(306, 22);
             this.textBox3.TabIndex = 8;
             this.textBox3.Text = "http://localhost:50021";
-            this.toolTip1.SetToolTip(this.textBox3, "VOICEBOXのHTTPサーバアドレスとポートを指定します。\r\n初期値は、http://localhost:50021です。\r\nVOICEBOXの設定を変更して" +
+            this.toolTip1.SetToolTip(this.textBox3, "VOICEVOXのHTTPサーバアドレスとポートを指定します。\r\n初期値は、http://localhost:50021です。\r\nVOICEVOXの設定を変更して" +
         "いる場合は、修正してください。");
             this.textBox3.TextChanged += new System.EventHandler(this.TextBox3_TextChanged);
             // 
@@ -196,9 +196,9 @@
             this.label4.Location = new System.Drawing.Point(11, 104);
             this.label4.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(168, 15);
+            this.label4.Size = new System.Drawing.Size(167, 15);
             this.label4.TabIndex = 6;
-            this.label4.Text = "VOICEBOX Engineの場所";
+            this.label4.Text = "VOICEVOX Engineの場所";
             // 
             // label5
             // 
@@ -207,9 +207,9 @@
             this.label5.Location = new System.Drawing.Point(11, 147);
             this.label5.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(165, 15);
+            this.label5.Size = new System.Drawing.Size(164, 15);
             this.label5.TabIndex = 9;
-            this.label5.Text = "VOICEBOX サーバアドレス";
+            this.label5.Text = "VOICEVOX サーバアドレス";
             // 
             // AppConfig
             // 

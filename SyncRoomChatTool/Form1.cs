@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -10,6 +9,10 @@ using System.Speech.Synthesis;
 using System.Media;
 using System.IO;
 using System.Net;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
+using Newtonsoft.Json.Linq;
 
 namespace SyncRoomChatTool
 {
@@ -26,14 +29,38 @@ namespace SyncRoomChatTool
             InitializeComponent();
         }
 
-        private static UIAutomationLib ui = new UIAutomationLib();
+        private class SpeakerFromAPI
+        {
+            public string Name { get; set; }
+            public string speaker_uuid { get; set; }
+            public List<StyleFromAPI> styles { get; set; }
+            public string version { get; set; }
+        }
 
+        private class StyleFromAPI
+        {
+            public int id { get; set; }
+            public string name { get; set; }
+        }
+
+        private class Speaker
+        {
+            public int StyleId { get; set; }
+            public string UserName { get; set; }
+            public bool ChimeFlg { get; set; }
+            public bool SpeechFlg { get; set; }
+        }
+
+        private static UIAutomationLib ui = new UIAutomationLib();
         private static readonly string voiceVoxDefaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs\\VOICEVOX\\run.exe");
 
-        private void Form1_Load(object sender, EventArgs e)
+        static List<Speaker> UserTable = new List<Speaker> { };
+        static List<Speaker> StyleDef = new List<Speaker> { };
+
+        private async void Form1_Load(object sender, EventArgs e)
         {
             Menu_EnebleSpeech.Checked = App.Default.canSpeech;
-            Menu_UseVoiceBox.Checked = App.Default.UseVoiceBox;
+            Menu_UseVoiceVox.Checked = App.Default.UseVoiceVox;
             richTextBox1.LanguageOption = RichTextBoxLanguageOptions.UIFonts;
             richTextBox1.Font = App.Default.logFont;
             richTextBox1.ZoomFactor = App.Default.zoomFacter;
@@ -42,14 +69,14 @@ namespace SyncRoomChatTool
                 App.Default.waitTiming = 100;
             }
 
-            //VOICEVOXのパス設定がされていなくて
-            if (String.IsNullOrEmpty( App.Default.VoiceBoxPath))
+            //VOICEVOXのパス設定がされていなくて（初回起動時想定。デフォルトコンフィグは空なので）
+            if (String.IsNullOrEmpty(App.Default.VoiceVoxPath))
             {
                 //VOICEVOXデフォルトパスにRun.exeが居る＝インストールされているとみなし、
                 if (File.Exists(voiceVoxDefaultPath))
                 {
                     //設定に保存する＝VOICEVOXが使えると見なす。
-                    App.Default.VoiceBoxPath = voiceVoxDefaultPath;
+                    App.Default.VoiceVoxPath = voiceVoxDefaultPath;
                 }
             }
 
@@ -60,14 +87,65 @@ namespace SyncRoomChatTool
                 App.Default.linkWaveFilePath = "";
             }
 
-            if (string.IsNullOrEmpty(App.Default.VoiceBoxAddress))
+            if (string.IsNullOrEmpty(App.Default.VoiceVoxAddress))
             {
-                App.Default.VoiceBoxAddress = "http://localhost:50021";
+                App.Default.VoiceVoxAddress = "http://localhost:50021";
             }
 
             App.Default.Save();
 
             this.Size = App.Default.windowSize;
+            richTextBox1.Refresh();
+
+            TargetProcess tp = new TargetProcess("run");
+            if (!string.IsNullOrEmpty(App.Default.VoiceVoxPath))
+            {
+                if (tp.IsAlive == false)
+                {
+                    try
+                    {
+                        //自動起動をトライするが、失敗したって平気さ。知らねぇよ。
+                        ProcessStartInfo processStartInfo = new ProcessStartInfo();
+                        processStartInfo.FileName = App.Default.VoiceVoxPath;
+                        processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                        Process.Start(processStartInfo);
+                        await Task.Delay(3000);
+                    }
+                    catch
+                    {
+                        richTextBox1.Text += "VOICEVOXの自動起動に失敗しました。";
+                        SpeechSynthesizer synth = new SpeechSynthesizer();
+                        synth.SelectVoice("Microsoft Haruka Desktop");
+                        synth.SpeakAsync($"エラーが発生しています。VOICEVOXの自動起動に失敗しました。");
+                        Application.Exit();
+                    }
+                }
+
+                string url = App.Default.VoiceVoxAddress;
+                if (url.Substring(url.Length - 1, 1) != "/")
+                {
+                    url += "/";
+                }
+                url += "speakers";
+                var client = new ServiceHttpClient(url);
+                var ret = client.Get();
+                if (ret != null)
+                {
+                    //todo:Jsonのデシリアライズ。StyleIdの一覧を作る。
+                    List<SpeakerFromAPI> myDeserializedClass = JsonConvert.DeserializeObject<List<SpeakerFromAPI>>(ret.ToString());
+
+                    foreach (SpeakerFromAPI speaker in myDeserializedClass)
+                    {
+                        foreach (StyleFromAPI st in speaker.styles)
+                        {
+                            Speaker addLine = new Speaker {
+                                StyleId = st.id
+                            };
+                            StyleDef.Add(addLine);
+                        }
+                    }
+                }
+            }
 
             _ = CheckProcess("SYNCROOM", this.statusStrip1, this.richTextBox1);
         }
@@ -81,22 +159,24 @@ namespace SyncRoomChatTool
             //初期化。前回取得のログ全部と、最後のコメントの保管場所
             string oldLog = "";
             string lastComment = "";
+            DateTime lastDt = DateTime.Now;
+            DateTime newDt = DateTime.Now;
 
             while (true)
             {
-                TargetProcess tp = new TargetProcess(ProcessName);  //結構プロセス生きてるか調べるかなと思って別クラスにしたけど、監視タスク内でしか見てねぇ。
+                TargetProcess tp = new TargetProcess(ProcessName);
                 await Task.Delay((int)App.Default.waitTiming);
-
+                
                 string toolMessage;
 
-                if (tp.IsAlive())
+                if (tp.IsAlive)
                 {
                     toolMessage = "は起動されています。";
                     try
                     {
-                        AutomationElement synroomElement = ui.GetMainFrameElement(tp.Proc());
+                        AutomationElement synroomElement = ui.GetMainFrameElement(tp.Proc);
 
-                        IntPtr chatwHnd = ui.FindHWndByCaptionAndProcessID("チャット", tp.Id());
+                        IntPtr chatwHnd = ui.FindHWndByCaptionAndProcessID("チャット", tp.Id);
 
                         if (chatwHnd != IntPtr.Zero)
                         {
@@ -107,7 +187,7 @@ namespace SyncRoomChatTool
                             AutomationElement chatLog = ui.GetElement(synroomElement);
                             ValuePattern vp = ui.GetValuePattern(chatLog);
 
-                            if (vp == null) { break;}
+                            if (vp == null) { break; }
 
                             Match match;
                             match = Regex.Match(chatLog.Current.Name, "^チャットログ");
@@ -125,6 +205,7 @@ namespace SyncRoomChatTool
                                 {
                                     oldLog = vp.Current.Value;
                                     string newComment = "";
+                                    newDt = DateTime.Now;
                                     logView.Text = vp.Current.Value;
 
                                     //改行で区切って、一番最後を最新コメントとする。
@@ -132,16 +213,17 @@ namespace SyncRoomChatTool
 
                                     newComment = ary[ary.Count() - 1];
 
+                                    CommentText CommentObj = new CommentText(newComment);
+                                    CommentObj.LastCommentTime = lastDt;
+                                    CommentObj.NowCommentTime = newDt;
+
                                     if (App.Default.canSpeech)
                                     {
-                                        //ユーザ名の取得
-                                        string userName = GetComment(newComment, CommentDivider.UserName);
-
-                                        string commentText = "";
                                         //リンクの場合
-                                        if (IsLink(newComment))
+                                        if (CommentObj.IsLink)
                                         {
-                                            commentText = "リンクが張られました。";
+                                            CommentObj.Comment = "リンクが張られました。";
+                                            CommentObj.Lang = 0;
                                             if (File.Exists(App.Default.linkWaveFilePath))
                                             {
                                                 SoundPlayer player = new SoundPlayer(App.Default.linkWaveFilePath);
@@ -151,33 +233,17 @@ namespace SyncRoomChatTool
                                                 continue;
                                             }
                                         }
-                                        else
-                                        {
-                                            //コメント部分の取得
-                                            commentText = GetComment(newComment, CommentDivider.Comment);
-                                        }
-
 
                                         //空行でない & 連続同一コメントでないこと。
-                                        if (IsBlank(newComment) == false && lastComment != newComment)
+                                        if (CommentObj.IsBlank == false && lastComment != newComment)
                                         {
-
-                                            //日本語が含まれているか（ちょっと判定は微妙だけど）
-                                            int lang = 0;
-                                            if (UseOnlyEnglish(newComment))
-                                            {
-                                                //Ziraがしゃべる。VOICEVOXを使うとしてもだ。
-                                                lang = 1;
-                                            }
-                                            //ToDo:リンクじゃないコメントで、コロンで区切った最後のコメントが来る。これ以降にあれやこれや入れる。
-
-
                                             //音声用の別処理をぶっ込む。
-                                            SpeechSynthe(commentText,lang);
+                                            SpeechSynthe(CommentObj);
                                         }
                                     }
 
                                     lastComment = newComment;
+                                    lastDt = newDt;
                                 }
                             }
                         }
@@ -186,9 +252,17 @@ namespace SyncRoomChatTool
                             ststp.Items[1].Text = "チャットログ待機中…";
                         }
                     }
+                    catch (ArgumentException agex) { }
+                        //hwnd が見つからなかった系のエラーは握りつぶす系。
+                        //SyncRoomの起動待ち状態で、起動直後で転ける様子。
                     catch (Exception ex)
                     {
-                        Debug.WriteLine(ex.Message.ToString());
+                        string errMsg = $"\r\nエラーが発生しています。{ex.Message}";
+                        logView.Text += errMsg;
+                        SpeechSynthesizer synth = new SpeechSynthesizer();
+                        synth.SelectVoice("Microsoft Haruka Desktop");
+                        synth.SpeakAsync(errMsg);
+                        await Task.Delay(3000);
                     }
                 }
                 else
@@ -201,65 +275,181 @@ namespace SyncRoomChatTool
             }
         }
 
-        private static string GetComment(string newComment, CommentDivider dv)
-        {
-            //コロンで区切る。
-            string[] ary = newComment.Split(new string[] { ":" }, StringSplitOptions.None);
+        private class CommentText {
 
-            if (ary.Length < 2)
+            static readonly int[] randTable = new int[] { 0, 8, 10, 14, 20, 21, 12, 13, 11, 3 };
+            static readonly string blankLineUserName = "改行コピペ野郎";
+
+            public bool IsBlank;
+            public bool IsLink;
+            public bool ChimeFlg = true;
+            public bool SpeechFlg = true;
+            public int Lang;
+            public int StyleId = 2;
+            public string UserName { get; set; }
+            public string Comment { get; set; }
+            public DateTime LastCommentTime;
+            public DateTime NowCommentTime;
+
+            public CommentText(string newComment) {
+                //末尾がコロンかどうか。空行チェック。
+                IsBlank = (newComment.Substring(newComment.Length - 1, 1) == ":");
+
+                //リンクかどうかのチェック
+                Match match;
+                match = Regex.Match(newComment, "https?://");
+                IsLink = (match.Success);
+
+                //英数のみかのチェックというか、指定のワードが入ってるかどうか（主に日本語）
+                match = Regex.Match(newComment, "[ぁ-んァ-ヶｱ-ﾝﾞﾟ一-龠！-／：-＠［-｀｛-～、-〜”’・]");
+                if (match.Success)
+                {
+                    Lang = 0;
+                }
+                else
+                {
+                    Lang = 1;
+                }
+
+                //ユーザ名の取得と、コロンを除いたコメント部分の取得
+                string[] ary = newComment.Split(new string[] { ":" }, StringSplitOptions.None);
+                if (ary.Length < 2)
+                {
+                    UserName = blankLineUserName;
+                    Comment = newComment;
+                }
+                else
+                {
+                    UserName = ary[ary.Length - (int)CommentDivider.UserName];
+                    Comment = ary[ary.Length - (int)CommentDivider.Comment];
+                }
+
+                if (UserName == blankLineUserName)
+                {
+                    //改行コピペマンに対しては、ユーザ周りの処理をしなくていいんじゃないかなと。コマンド系の処理も。
+                    return;
+                }
+
+                //ランダム音声割り当て用。ここ、コメントしたら全員デフォでしゃべる。
+                Random rnd = new Random();
+                StyleId = rnd.Next(randTable.Length);
+
+                bool existsFlg = UserTable.Exists(x => x.UserName == UserName);
+
+                if (existsFlg)
+                {
+                    //UserTableから、StyleIdその他の取り出し。
+                    foreach (var item in UserTable.Where(x => x.UserName == UserName))
+                    {
+                        StyleId = item.StyleId;
+                        ChimeFlg = item.ChimeFlg;
+                        SpeechFlg = item.SpeechFlg;
+                        break;
+                    }
+                }
+                else
+                {
+                    UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, SpeechFlg);
+                }
+
+                //行頭のコマンド有無のチェック。スタイル指定。
+                match = Regex.Match(Comment, @"^\/\d{1,2}");
+                if (match.Success)
+                {
+                    Comment = Comment.Replace(match.ToString(), "");
+                    //[数値]な形式の数値ではある。桁指定したので、[0]～[99]まで。
+                    match = Regex.Match(match.ToString(), @"\d{1,2}");
+                    if (match.Success)
+                    {
+                        //数値は取れたので範囲チェック。StyleIdの一覧と比較。
+                        if (StyleDef.Exists(x => x.StyleId == int.Parse(match.ToString())))
+                        {
+                            StyleId = int.Parse(match.ToString());
+
+                            //[]で指定された数値が、スタイル一覧と合致した場合は、UserTableになければ追加、あれば更新。
+                            UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, SpeechFlg);
+                        }
+                    }
+                }
+
+                //行頭コマンドチェック。/s はスピーチのトグル
+                match = Regex.Match(Comment, @"^/s", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    Comment = Comment.Replace(match.ToString(), "");
+                    UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, !SpeechFlg);
+                }
+
+                //行頭コマンドチェック。/c はスピーチのトグル
+                match = Regex.Match(Comment, @"^/c", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    Comment = Comment.Replace(match.ToString(), "");
+                    UpdateUserOption(existsFlg, UserName, StyleId, !ChimeFlg, SpeechFlg);
+                }
+
+                //UserTableから、StyleIdその他の取り出し。
+                foreach (var item in UserTable.Where(x => x.UserName == UserName))
+                {
+                    StyleId = item.StyleId;
+                    ChimeFlg = item.ChimeFlg;
+                    SpeechFlg = item.SpeechFlg;
+                    break;
+                }
+            }
+        }
+
+        private static void UpdateUserOption(bool existsFlg ,string UserName, int StyleId, bool ChatFlg, bool SpeechFlg)
+        {
+            if (existsFlg)
             {
-                return newComment;
+                foreach (var item in UserTable.Where(x => x.UserName == UserName))
+                {
+                    item.StyleId = StyleId;
+                    item.UserName = UserName;
+                    item.ChimeFlg = ChatFlg;
+                    item.SpeechFlg = SpeechFlg;
+                }
             }
             else
             {
-                return ary[ary.Length - (int)dv];
+                Speaker addLine = new Speaker
+                {
+                    StyleId = StyleId,
+                    UserName = UserName,
+                    ChimeFlg = ChatFlg,
+                    SpeechFlg = SpeechFlg
+                };
+                UserTable.Add(addLine);
             }
         }
 
-        private static bool IsBlank(string newComment)
+        private static void SpeechSynthe(CommentText commentObj )
         {
-            //末尾がコロンかどうか。空行チェック。
-            if (newComment.Substring(newComment.Length-1,1)==":")
+            //多分引っかからないとは思いつつ。
+            if (string.IsNullOrEmpty(commentObj.Comment))
             {
-                return true;
+                return;
             }
-            return false;
-        }
-
-        private static bool IsLink(string newComment)
-        {
-            //リンクかどうかのチェック
-            Match match;
-            match = Regex.Match(newComment, "https?://");
-            if (match.Success)
-            {
-                return true;
-            }
-            return false;
-        }
-
-        private static bool UseOnlyEnglish(string newComment)
-        {
-            //英数のみかのチェックというか、指定のワードが入ってるかどうか（主に日本語）
-            Match match;
-            match = Regex.Match(newComment, "[ぁ-んァ-ヶｱ-ﾝﾞﾟ一-龠！-／：-＠［-｀｛-～、-〜”’・]");
-            if (match.Success)
-            {
-                return false;
-            }
-            return true;
-        }
-
-        private static void SpeechSynthe(string commentText, int lang = 0)
-        {
-            string speechComment = commentText;
 
             //メッセージ（情報）を鳴らす
-            SystemSounds.Asterisk.Play();
+            TimeSpan commentDiff = commentObj.NowCommentTime - commentObj.LastCommentTime;
 
-            if (App.Default.UseVoiceBox == true && lang == 0)
+            if (commentObj.ChimeFlg) {
+                if (commentDiff.TotalSeconds > 5)
+                {
+                    SystemSounds.Asterisk.Play();
+                }
+            }
+
+            if (commentObj.SpeechFlg == false)
             {
-                SpeechVOICEVOX(commentText);
+                return;
+            }
+
+            if (App.Default.UseVoiceVox == true && commentObj.Lang == 0)
+            {
+                SpeechVOICEVOX(commentObj);
                 return;
             }
 
@@ -269,7 +459,7 @@ namespace SyncRoomChatTool
             };
 
             //lang == 0 日本語でしゃべる。VOICEVOXを使うかどうかで処理分岐。
-            if (lang == 0)
+            if (commentObj.Lang == 0)
             {
                 synth.SelectVoice("Microsoft Haruka Desktop");
             }
@@ -278,18 +468,20 @@ namespace SyncRoomChatTool
                 synth.SelectVoice("Microsoft Zira Desktop");
             }
 
-            synth.SpeakAsync(speechComment);
+            synth.SpeakAsync(commentObj.Comment);
         }
 
-
-        private static void SpeechVOICEVOX(string commentText)
+        private static void SpeechVOICEVOX(CommentText commentObj)
         {
-            string baseUrl = App.Default.VoiceBoxAddress;
+            string baseUrl = App.Default.VoiceVoxAddress;
             string url;
 
             if (string.IsNullOrEmpty(baseUrl))
             {
                 Debug.WriteLine("URLが入ってない");
+                SpeechSynthesizer synth = new SpeechSynthesizer();
+                synth.SelectVoice("Microsoft Haruka Desktop");
+                synth.SpeakAsync($"エラーが発生しています。ベースURLが入っていません。");
                 return;
             }
 
@@ -298,7 +490,7 @@ namespace SyncRoomChatTool
                 baseUrl += "/";
             }
 
-            url = baseUrl + $"audio_query?text='{commentText}'&speaker=2";
+            url = baseUrl + $"audio_query?text='{commentObj.Comment}'&speaker={commentObj.StyleId}";
 
             var client = new ServiceHttpClient(url);
             String QueryResponce = "";
@@ -306,7 +498,7 @@ namespace SyncRoomChatTool
 
             if (ret.StatusCode.Equals(HttpStatusCode.OK))
             {
-                url = baseUrl + $"synthesis?speaker=2";
+                url = baseUrl + $"synthesis?speaker={commentObj.StyleId}";
                 client = new ServiceHttpClient(url);
                 string wavFile = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
                 ret = client.Post(ref QueryResponce, wavFile);
@@ -337,8 +529,8 @@ namespace SyncRoomChatTool
             {
                 App.Default.linkWaveFilePath = apConf.linkWaveFilePath;
                 App.Default.waitTiming = apConf.waitTiming;
-                App.Default.VoiceBoxAddress = apConf.voiceBoxAddress;
-                App.Default.VoiceBoxPath = apConf.voiceBoxPath;
+                App.Default.VoiceVoxAddress = apConf.voiceVoxAddress;
+                App.Default.VoiceVoxPath = apConf.voiceVoxPath;
                 App.Default.Save();
             }
         }
@@ -363,7 +555,7 @@ namespace SyncRoomChatTool
             App.Default.Save();
         }
 
-        private void richTextBox1_TextChanged(object sender, EventArgs e)
+        private void RichTextBox1_TextChanged(object sender, EventArgs e)
         {
             //カレット位置を末尾に移動
             richTextBox1.SelectionStart = richTextBox1.Text.Length;
@@ -377,10 +569,17 @@ namespace SyncRoomChatTool
             App.Default.Save();
         }
 
-        private void Menu_VoiceBox_Click(object sender, EventArgs e)
+        private void Menu_VoiceVox_Click(object sender, EventArgs e)
         {
-            App.Default.UseVoiceBox = Menu_UseVoiceBox.Checked;
+            App.Default.UseVoiceVox = Menu_UseVoiceVox.Checked;
             App.Default.Save();
+        }
+
+        private void Menu_Help_Click(object sender, EventArgs e)
+        {
+            Help help = new Help();
+
+            help.ShowDialog();
         }
     }
 }

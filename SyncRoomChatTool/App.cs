@@ -1,4 +1,6 @@
-﻿namespace SyncRoomChatTool {
+﻿using System;
+
+namespace SyncRoomChatTool {
     
     
     // このクラスでは設定クラスでの特定のイベントを処理することができます:
@@ -16,7 +18,8 @@
             // this.SettingsSaving += this.SettingsSavingEventHandler;
             //
         }
-        
+
+
         private void SettingChangingEventHandler(object sender, System.Configuration.SettingChangingEventArgs e) {
             // SettingChangingEvent イベントを処理するコードをここに追加してください。
         }
