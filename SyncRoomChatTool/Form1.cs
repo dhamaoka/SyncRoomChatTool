@@ -1,16 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Media;
+using System.Net;
+using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Automation;
 using System.Windows.Forms;
-using System.Speech.Synthesis;
-using System.Media;
-using System.IO;
-using System.Net;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 
 namespace SyncRoomChatTool
 {
@@ -142,7 +142,8 @@ namespace SyncRoomChatTool
                     {
                         foreach (StyleFromAPI st in speaker.styles)
                         {
-                            Speaker addLine = new Speaker {
+                            Speaker addLine = new Speaker
+                            {
                                 StyleId = st.id
                             };
                             StyleDef.Add(addLine);
@@ -170,7 +171,7 @@ namespace SyncRoomChatTool
             {
                 TargetProcess tp = new TargetProcess(ProcessName);
                 await Task.Delay((int)App.Default.waitTiming);
-                
+
                 string toolMessage;
 
                 if (tp.IsAlive)
@@ -257,8 +258,8 @@ namespace SyncRoomChatTool
                         }
                     }
                     catch (ArgumentException agex) { }
-                        //hwnd が見つからなかった系のエラーは握りつぶす系。
-                        //SyncRoomの起動待ち状態で、起動直後で転ける様子。
+                    //hwnd が見つからなかった系のエラーは握りつぶす系。
+                    //SyncRoomの起動待ち状態で、起動直後で転ける様子。
                     catch (Exception ex)
                     {
                         string errMsg = $"\r\nエラーが発生しています。{ex.Message}";
@@ -279,7 +280,8 @@ namespace SyncRoomChatTool
             }
         }
 
-        private class CommentText {
+        private class CommentText
+        {
 
             static readonly int[] randTable = new int[] { 0, 8, 10, 14, 20, 21, 12, 13, 11, 3 };
             static readonly string blankLineUserName = "改行コピペ野郎";
@@ -295,7 +297,8 @@ namespace SyncRoomChatTool
             public DateTime LastCommentTime;
             public DateTime NowCommentTime;
 
-            public CommentText(string newComment) {
+            public CommentText(string newComment)
+            {
                 //末尾がコロンかどうか。空行チェック。
                 IsBlank = (newComment.Substring(newComment.Length - 1, 1) == ":");
 
@@ -437,14 +440,14 @@ namespace SyncRoomChatTool
                 if (Comment.Length > commentLimit)
                 {
                     string[] cutText = { "、以下略。", ", Omitted below" };
-                    Comment = Comment.Substring(0,commentLimit - 1);
+                    Comment = Comment.Substring(0, commentLimit - 1);
                     Comment += cutText[Lang];
                 }
 
             }
         }
 
-        private static void UpdateUserOption(bool existsFlg ,string UserName, int StyleId, bool ChatFlg, bool SpeechFlg)
+        private static void UpdateUserOption(bool existsFlg, string UserName, int StyleId, bool ChatFlg, bool SpeechFlg)
         {
             if (existsFlg)
             {
@@ -469,7 +472,7 @@ namespace SyncRoomChatTool
             }
         }
 
-        private static void SpeechSynthe(CommentText commentObj )
+        private static void SpeechSynthe(CommentText commentObj)
         {
             //多分引っかからないとは思いつつ。
             if (string.IsNullOrEmpty(commentObj.Comment))
@@ -480,7 +483,8 @@ namespace SyncRoomChatTool
             //メッセージ（情報）を鳴らす
             TimeSpan commentDiff = commentObj.NowCommentTime - commentObj.LastCommentTime;
 
-            if (commentObj.ChimeFlg) {
+            if (commentObj.ChimeFlg)
+            {
                 if (commentDiff.TotalSeconds > 5)
                 {
                     SystemSounds.Asterisk.Play();

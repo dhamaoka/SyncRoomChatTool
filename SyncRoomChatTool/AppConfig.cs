@@ -1,13 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.IO;
+using System.Windows.Forms;
 
 namespace SyncRoomChatTool
 {
@@ -64,7 +57,7 @@ namespace SyncRoomChatTool
             string absolutePath = Path.Combine(appPath, "link.wav");
 
             OpenFileDialog dlg = new OpenFileDialog();
-            
+
             dlg.FileName = absolutePath;
             dlg.Title = "リンク専用の音声ファイルを選択してください。";
             dlg.InitialDirectory = appPath;
@@ -82,7 +75,7 @@ namespace SyncRoomChatTool
         {
             if (DialogResult == DialogResult.OK)
             {
-                if (!string.IsNullOrEmpty(linkWaveFilePath)) 
+                if (!string.IsNullOrEmpty(linkWaveFilePath))
                 {
                     if (!File.Exists(linkWaveFilePath))
                     {
@@ -112,7 +105,7 @@ namespace SyncRoomChatTool
 
         private void TextBox2_TextChanged(object sender, EventArgs e)
         {
-            voiceVoxPath = textBox2.Text;   
+            voiceVoxPath = textBox2.Text;
         }
 
         private void TextBox3_TextChanged(object sender, EventArgs e)
