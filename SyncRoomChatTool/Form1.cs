@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Media;
 using System.Net;
+using System.Reflection;
 using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -59,6 +60,11 @@ namespace SyncRoomChatTool
 
         private async void Form1_Load(object sender, EventArgs e)
         {
+            var assembly = Assembly.GetExecutingAssembly();
+            var fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
+
+            this.Text += $" {fileVersionInfo.ProductVersion}";
+
             Menu_EnebleSpeech.Checked = App.Default.canSpeech;
             Menu_UseVoiceVox.Checked = App.Default.UseVoiceVox;
             richTextBox1.LanguageOption = RichTextBoxLanguageOptions.UIFonts;
@@ -198,13 +204,6 @@ namespace SyncRoomChatTool
                             match = Regex.Match(chatLog.Current.Name, "^チャットログ");
                             if (match.Success)
                             {
-                                if (oldLog == "")
-                                {
-                                    //基本初回のみ。
-                                    oldLog = vp.Current.Value;
-                                    logView.Text = oldLog;
-                                }
-
                                 //チャットログに変化があった場合。
                                 if (oldLog != vp.Current.Value)
                                 {
