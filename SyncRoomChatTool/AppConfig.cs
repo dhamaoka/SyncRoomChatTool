@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Media;
 using System.Windows.Forms;
 
 namespace SyncRoomChatTool
@@ -127,6 +128,16 @@ namespace SyncRoomChatTool
                 voiceVoxPath = dlg.FileName;
                 textBox2.Text = voiceVoxPath;
                 dlg.Dispose();
+            }
+        }
+
+        private void ButtonPlay_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(textBox1.Text))
+            {
+                SoundPlayer player = new SoundPlayer(textBox1.Text);
+                //非同期再生する
+                player.Play();
             }
         }
     }

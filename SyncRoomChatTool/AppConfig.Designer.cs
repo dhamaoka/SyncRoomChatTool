@@ -36,6 +36,7 @@
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.textBox3 = new System.Windows.Forms.TextBox();
+            this.numCut = new System.Windows.Forms.NumericUpDown();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.fontDialog1 = new System.Windows.Forms.FontDialog();
@@ -45,8 +46,8 @@
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
-            this.numCut = new System.Windows.Forms.NumericUpDown();
             this.label7 = new System.Windows.Forms.Label();
+            this.buttonPlay = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.numWait)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numCut)).BeginInit();
             this.SuspendLayout();
@@ -58,7 +59,7 @@
             this.buttonOK.Margin = new System.Windows.Forms.Padding(2);
             this.buttonOK.Name = "buttonOK";
             this.buttonOK.Size = new System.Drawing.Size(104, 36);
-            this.buttonOK.TabIndex = 12;
+            this.buttonOK.TabIndex = 15;
             this.buttonOK.Text = "OK(&R)";
             this.buttonOK.UseVisualStyleBackColor = true;
             this.buttonOK.Click += new System.EventHandler(this.ButtonOK_Click);
@@ -71,7 +72,7 @@
             this.buttonCancel.Margin = new System.Windows.Forms.Padding(2);
             this.buttonCancel.Name = "buttonCancel";
             this.buttonCancel.Size = new System.Drawing.Size(119, 36);
-            this.buttonCancel.TabIndex = 13;
+            this.buttonCancel.TabIndex = 16;
             this.buttonCancel.Text = "キャンセル(&C)";
             this.buttonCancel.UseVisualStyleBackColor = true;
             this.buttonCancel.Click += new System.EventHandler(this.ButtonCancel_Click);
@@ -106,10 +107,10 @@
             // textBox1
             // 
             this.textBox1.Font = new System.Drawing.Font("MS UI Gothic", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.textBox1.Location = new System.Drawing.Point(219, 59);
+            this.textBox1.Location = new System.Drawing.Point(219, 58);
             this.textBox1.Margin = new System.Windows.Forms.Padding(2);
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(628, 22);
+            this.textBox1.Size = new System.Drawing.Size(584, 22);
             this.textBox1.TabIndex = 4;
             this.toolTip1.SetToolTip(this.textBox1, "htttpリンクが張られた場合の固定音声ファイルを指定します。");
             this.textBox1.TextChanged += new System.EventHandler(this.TextBox1_TextChanged);
@@ -121,7 +122,7 @@
             this.textBox2.Margin = new System.Windows.Forms.Padding(2);
             this.textBox2.Name = "textBox2";
             this.textBox2.Size = new System.Drawing.Size(628, 22);
-            this.textBox2.TabIndex = 6;
+            this.textBox2.TabIndex = 8;
             this.toolTip1.SetToolTip(this.textBox2, "VOICEVOXのEngineの場所を指定します。");
             this.textBox2.TextChanged += new System.EventHandler(this.TextBox2_TextChanged);
             // 
@@ -132,11 +133,33 @@
             this.textBox3.Margin = new System.Windows.Forms.Padding(2);
             this.textBox3.Name = "textBox3";
             this.textBox3.Size = new System.Drawing.Size(306, 22);
-            this.textBox3.TabIndex = 8;
+            this.textBox3.TabIndex = 11;
             this.textBox3.Text = "http://localhost:50021";
             this.toolTip1.SetToolTip(this.textBox3, "VOICEVOXのHTTPサーバアドレスとポートを指定します。\r\n初期値は、http://localhost:50021です。\r\nVOICEVOXの設定を変更して" +
         "いる場合は、修正してください。");
             this.textBox3.TextChanged += new System.EventHandler(this.TextBox3_TextChanged);
+            // 
+            // numCut
+            // 
+            this.numCut.Font = new System.Drawing.Font("MS UI Gothic", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.numCut.Location = new System.Drawing.Point(219, 187);
+            this.numCut.Margin = new System.Windows.Forms.Padding(2);
+            this.numCut.Minimum = new decimal(new int[] {
+            20,
+            0,
+            0,
+            0});
+            this.numCut.Name = "numCut";
+            this.numCut.Size = new System.Drawing.Size(61, 22);
+            this.numCut.TabIndex = 13;
+            this.numCut.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.numCut.ThousandsSeparator = true;
+            this.toolTip1.SetToolTip(this.numCut, "切り捨てる文字数を指定します。余り長いと読み上げに時間がかかるので。\r\n20～100文字まで。30文字がデフォルトです。");
+            this.numCut.Value = new decimal(new int[] {
+            30,
+            0,
+            0,
+            0});
             // 
             // label1
             // 
@@ -173,7 +196,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(851, 58);
+            this.button1.Location = new System.Drawing.Point(812, 58);
             this.button1.Margin = new System.Windows.Forms.Padding(2);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(35, 22);
@@ -188,7 +211,7 @@
             this.button2.Margin = new System.Windows.Forms.Padding(2);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(35, 22);
-            this.button2.TabIndex = 7;
+            this.button2.TabIndex = 9;
             this.button2.Text = "…";
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
@@ -197,22 +220,22 @@
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("MS UI Gothic", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.label4.Location = new System.Drawing.Point(11, 104);
+            this.label4.Location = new System.Drawing.Point(11, 108);
             this.label4.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(185, 15);
-            this.label4.TabIndex = 6;
+            this.label4.TabIndex = 7;
             this.label4.Text = "VOICEVOX Engineの場所(&E)";
             // 
             // label5
             // 
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("MS UI Gothic", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.label5.Location = new System.Drawing.Point(11, 147);
+            this.label5.Location = new System.Drawing.Point(11, 151);
             this.label5.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(183, 15);
-            this.label5.TabIndex = 9;
+            this.label5.TabIndex = 10;
             this.label5.Text = "VOICEVOX サーバアドレス(&S)";
             // 
             // label6
@@ -223,30 +246,8 @@
             this.label6.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(37, 15);
-            this.label6.TabIndex = 11;
+            this.label6.TabIndex = 14;
             this.label6.Text = "文字";
-            // 
-            // numCut
-            // 
-            this.numCut.Font = new System.Drawing.Font("MS UI Gothic", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.numCut.Location = new System.Drawing.Point(219, 189);
-            this.numCut.Margin = new System.Windows.Forms.Padding(2);
-            this.numCut.Minimum = new decimal(new int[] {
-            20,
-            0,
-            0,
-            0});
-            this.numCut.Name = "numCut";
-            this.numCut.Size = new System.Drawing.Size(61, 22);
-            this.numCut.TabIndex = 10;
-            this.numCut.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.numCut.ThousandsSeparator = true;
-            this.toolTip1.SetToolTip(this.numCut, "切り捨てる文字数を指定します。余り長いと読み上げに時間がかかるので。\r\n20～100文字まで。30文字がデフォルトです。");
-            this.numCut.Value = new decimal(new int[] {
-            30,
-            0,
-            0,
-            0});
             // 
             // label7
             // 
@@ -256,8 +257,19 @@
             this.label7.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(156, 15);
-            this.label7.TabIndex = 9;
+            this.label7.TabIndex = 12;
             this.label7.Text = "切り捨てる文字の長さ(&D)";
+            // 
+            // buttonPlay
+            // 
+            this.buttonPlay.Location = new System.Drawing.Point(851, 58);
+            this.buttonPlay.Margin = new System.Windows.Forms.Padding(2);
+            this.buttonPlay.Name = "buttonPlay";
+            this.buttonPlay.Size = new System.Drawing.Size(35, 22);
+            this.buttonPlay.TabIndex = 6;
+            this.buttonPlay.Text = "▶";
+            this.buttonPlay.UseVisualStyleBackColor = true;
+            this.buttonPlay.Click += new System.EventHandler(this.ButtonPlay_Click);
             // 
             // AppConfig
             // 
@@ -266,6 +278,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.CancelButton = this.buttonCancel;
             this.ClientSize = new System.Drawing.Size(897, 245);
+            this.Controls.Add(this.buttonPlay);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.numCut);
             this.Controls.Add(this.label7);
@@ -321,5 +334,6 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.NumericUpDown numCut;
         private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Button buttonPlay;
     }
 }

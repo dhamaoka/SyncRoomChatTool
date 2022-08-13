@@ -7,7 +7,7 @@ namespace SyncRoomChatTool
 {
     public partial class Help : Form
     {
-        string url = "https://github.com/dhamaoka/SyncRoomChatTool/#readme";
+        string url = "https://github.com/dhamaoka/SyncRoomChatTool/wiki";
 
         public Help()
         {

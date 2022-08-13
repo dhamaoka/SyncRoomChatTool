@@ -38,13 +38,13 @@
             this.MenuSpeech = new System.Windows.Forms.ToolStripMenuItem();
             this.Menu_EnebleSpeech = new System.Windows.Forms.ToolStripMenuItem();
             this.Menu_UseVoiceVox = new System.Windows.Forms.ToolStripMenuItem();
+            this.Menu_Help = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
             this.panel1 = new System.Windows.Forms.Panel();
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.fontDialog1 = new System.Windows.Forms.FontDialog();
-            this.Menu_Help = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -60,7 +60,7 @@
             this.Menu_Help});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(940, 28);
+            this.menuStrip1.Size = new System.Drawing.Size(940, 31);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -68,14 +68,15 @@
             // 
             this.MenuFile.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.menuClose});
+            this.MenuFile.Font = new System.Drawing.Font("Yu Gothic UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.MenuFile.Name = "MenuFile";
-            this.MenuFile.Size = new System.Drawing.Size(82, 24);
+            this.MenuFile.Size = new System.Drawing.Size(90, 27);
             this.MenuFile.Text = "ファイル(&F)";
             // 
             // menuClose
             // 
             this.menuClose.Name = "menuClose";
-            this.menuClose.Size = new System.Drawing.Size(147, 26);
+            this.menuClose.Size = new System.Drawing.Size(224, 28);
             this.menuClose.Text = "閉じる(&E)";
             this.menuClose.Click += new System.EventHandler(this.MenuClose_Click);
             // 
@@ -84,21 +85,22 @@
             this.MenuTool.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.MenuFont,
             this.MenuOption});
+            this.MenuTool.Font = new System.Drawing.Font("Yu Gothic UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.MenuTool.Name = "MenuTool";
-            this.MenuTool.Size = new System.Drawing.Size(74, 24);
+            this.MenuTool.Size = new System.Drawing.Size(81, 27);
             this.MenuTool.Text = "ツール(&T)";
             // 
             // MenuFont
             // 
             this.MenuFont.Name = "MenuFont";
-            this.MenuFont.Size = new System.Drawing.Size(150, 26);
+            this.MenuFont.Size = new System.Drawing.Size(224, 28);
             this.MenuFont.Text = "フォント(&F)";
             this.MenuFont.Click += new System.EventHandler(this.MenuFont_Click);
             // 
             // MenuOption
             // 
             this.MenuOption.Name = "MenuOption";
-            this.MenuOption.Size = new System.Drawing.Size(150, 26);
+            this.MenuOption.Size = new System.Drawing.Size(224, 28);
             this.MenuOption.Text = "設定(&O)";
             this.MenuOption.Click += new System.EventHandler(this.MenuOption_Click);
             // 
@@ -107,8 +109,9 @@
             this.MenuSpeech.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.Menu_EnebleSpeech,
             this.Menu_UseVoiceVox});
+            this.MenuSpeech.Font = new System.Drawing.Font("Yu Gothic UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.MenuSpeech.Name = "MenuSpeech";
-            this.MenuSpeech.Size = new System.Drawing.Size(84, 24);
+            this.MenuSpeech.Size = new System.Drawing.Size(92, 27);
             this.MenuSpeech.Text = "スピーチ(&S)";
             // 
             // Menu_EnebleSpeech
@@ -117,7 +120,7 @@
             this.Menu_EnebleSpeech.CheckOnClick = true;
             this.Menu_EnebleSpeech.CheckState = System.Windows.Forms.CheckState.Checked;
             this.Menu_EnebleSpeech.Name = "Menu_EnebleSpeech";
-            this.Menu_EnebleSpeech.Size = new System.Drawing.Size(224, 26);
+            this.Menu_EnebleSpeech.Size = new System.Drawing.Size(239, 28);
             this.Menu_EnebleSpeech.Text = "スピーチさせる(&E)";
             this.Menu_EnebleSpeech.Click += new System.EventHandler(this.Menu_EnebleSpeech_Click);
             // 
@@ -127,41 +130,50 @@
             this.Menu_UseVoiceVox.CheckOnClick = true;
             this.Menu_UseVoiceVox.CheckState = System.Windows.Forms.CheckState.Checked;
             this.Menu_UseVoiceVox.Name = "Menu_UseVoiceVox";
-            this.Menu_UseVoiceVox.Size = new System.Drawing.Size(224, 26);
+            this.Menu_UseVoiceVox.Size = new System.Drawing.Size(239, 28);
             this.Menu_UseVoiceVox.Text = "VOICEVOXを使う(&V)";
             this.Menu_UseVoiceVox.Click += new System.EventHandler(this.Menu_VoiceVox_Click);
             // 
+            // Menu_Help
+            // 
+            this.Menu_Help.Font = new System.Drawing.Font("Yu Gothic UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.Menu_Help.Name = "Menu_Help";
+            this.Menu_Help.Size = new System.Drawing.Size(87, 27);
+            this.Menu_Help.Text = "ヘルプ(&H)";
+            this.Menu_Help.Click += new System.EventHandler(this.Menu_Help_Click);
+            // 
             // statusStrip1
             // 
+            this.statusStrip1.Font = new System.Drawing.Font("Yu Gothic UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.statusStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1,
             this.toolStripStatusLabel2});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 560);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 558);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(940, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(940, 24);
             this.statusStrip1.TabIndex = 1;
             this.statusStrip1.Text = "statusStrip1";
             // 
             // toolStripStatusLabel1
             // 
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(0, 16);
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(0, 18);
             // 
             // toolStripStatusLabel2
             // 
             this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            this.toolStripStatusLabel2.Size = new System.Drawing.Size(0, 16);
+            this.toolStripStatusLabel2.Size = new System.Drawing.Size(0, 18);
             // 
             // panel1
             // 
             this.panel1.Controls.Add(this.richTextBox1);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel1.Location = new System.Drawing.Point(0, 28);
+            this.panel1.Location = new System.Drawing.Point(0, 31);
             this.panel1.Margin = new System.Windows.Forms.Padding(2);
             this.panel1.Name = "panel1";
             this.panel1.Padding = new System.Windows.Forms.Padding(8);
-            this.panel1.Size = new System.Drawing.Size(940, 532);
+            this.panel1.Size = new System.Drawing.Size(940, 527);
             this.panel1.TabIndex = 3;
             // 
             // richTextBox1
@@ -176,18 +188,11 @@
             this.richTextBox1.Name = "richTextBox1";
             this.richTextBox1.ReadOnly = true;
             this.richTextBox1.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.richTextBox1.Size = new System.Drawing.Size(924, 516);
+            this.richTextBox1.Size = new System.Drawing.Size(924, 511);
             this.richTextBox1.TabIndex = 3;
             this.richTextBox1.Text = resources.GetString("richTextBox1.Text");
             this.richTextBox1.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.RichTextBox1_LinkClicked);
             this.richTextBox1.TextChanged += new System.EventHandler(this.RichTextBox1_TextChanged);
-            // 
-            // Menu_Help
-            // 
-            this.Menu_Help.Name = "Menu_Help";
-            this.Menu_Help.Size = new System.Drawing.Size(79, 24);
-            this.Menu_Help.Text = "ヘルプ(&H)";
-            this.Menu_Help.Click += new System.EventHandler(this.Menu_Help_Click);
             // 
             // Form1
             // 
