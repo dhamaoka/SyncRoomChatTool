@@ -13,6 +13,7 @@ using System.Windows.Automation;
 using System.Windows.Forms;
 using Newtonsoft.Json;
 
+
 namespace SyncRoomChatTool
 {
     public partial class Form1 : Form
