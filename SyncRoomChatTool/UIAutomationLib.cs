@@ -77,8 +77,8 @@ namespace SyncRoomChatTool
             return AutomationElement.FromHandle(p.MainWindowHandle);
         }
 
-        // チャットログの中身を取得
-        public AutomationElement GetElement(AutomationElement rootElement)
+        // Editエレメントを探して返す。
+        public AutomationElement GetEditElement(AutomationElement rootElement,string elementName)
         {
             AutomationElementCollection allElements = rootElement.FindAll(TreeScope.Element | TreeScope.Descendants, new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit));
 
@@ -87,9 +87,7 @@ namespace SyncRoomChatTool
 
             foreach (AutomationElement el in allElements)
             {
-
-                //Debug.WriteLine(el.Current.Name);
-                if (el.Current.Name.Contains("チャットログ"))
+                if (el.Current.Name.Contains(elementName))
                 {
                     returnElement = el;
                     break;

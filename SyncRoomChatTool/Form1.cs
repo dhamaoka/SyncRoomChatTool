@@ -13,7 +13,6 @@ using System.Windows.Automation;
 using System.Windows.Forms;
 using Newtonsoft.Json;
 
-
 namespace SyncRoomChatTool
 {
     public partial class Form1 : Form
@@ -106,6 +105,7 @@ namespace SyncRoomChatTool
             App.Default.Save();
 
             this.Size = App.Default.windowSize;
+            this.Refresh();
             richTextBox1.Refresh();
 
             TargetProcess tp = new TargetProcess("run");
@@ -127,7 +127,7 @@ namespace SyncRoomChatTool
                         richTextBox1.Text += "VOICEVOXの自動起動に失敗しました。";
                         SpeechSynthesizer synth = new SpeechSynthesizer();
                         synth.SelectVoice("Microsoft Haruka Desktop");
-                        synth.SpeakAsync($"エラーが発生しています。VOICEVOXの自動起動に失敗しました。");
+                        synth.Speak($"エラーが発生しています。VOICEVOXの自動起動に失敗しました。");
                         Application.Exit();
                     }
                 }
@@ -186,20 +186,19 @@ namespace SyncRoomChatTool
                     toolMessage = "は起動されています。";
                     try
                     {
-                        AutomationElement synroomElement = ui.GetMainFrameElement(tp.Proc);
+                        //AutomationElement synroomElement = ui.GetMainFrameElement(tp.Proc);
 
                         IntPtr chatwHnd = ui.FindHWndByCaptionAndProcessID("チャット", tp.Id);
 
                         if (chatwHnd != IntPtr.Zero)
                         {
-                            AutomationElement chatWindow = AutomationElement.FromHandle(chatwHnd);
-                            chatWindow.SetFocus();
                             ststp.Items[1].Text = "チャットログ監視中。";
+                            AutomationElement chatWindow = AutomationElement.FromHandle(chatwHnd);
 
-                            AutomationElement chatLog = ui.GetElement(synroomElement);
+                            AutomationElement chatLog = ui.GetEditElement(chatWindow, "チャットログ");
                             ValuePattern vp = ui.GetValuePattern(chatLog);
 
-                            if (vp == null) { break; }
+                            if (vp == null) { continue; }
 
                             Match match;
                             match = Regex.Match(chatLog.Current.Name, "^チャットログ");

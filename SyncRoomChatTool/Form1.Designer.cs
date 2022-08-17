@@ -76,7 +76,7 @@
             // menuClose
             // 
             this.menuClose.Name = "menuClose";
-            this.menuClose.Size = new System.Drawing.Size(224, 28);
+            this.menuClose.Size = new System.Drawing.Size(155, 28);
             this.menuClose.Text = "閉じる(&E)";
             this.menuClose.Click += new System.EventHandler(this.MenuClose_Click);
             // 
@@ -93,14 +93,14 @@
             // MenuFont
             // 
             this.MenuFont.Name = "MenuFont";
-            this.MenuFont.Size = new System.Drawing.Size(224, 28);
+            this.MenuFont.Size = new System.Drawing.Size(161, 28);
             this.MenuFont.Text = "フォント(&F)";
             this.MenuFont.Click += new System.EventHandler(this.MenuFont_Click);
             // 
             // MenuOption
             // 
             this.MenuOption.Name = "MenuOption";
-            this.MenuOption.Size = new System.Drawing.Size(224, 28);
+            this.MenuOption.Size = new System.Drawing.Size(161, 28);
             this.MenuOption.Text = "設定(&O)";
             this.MenuOption.Click += new System.EventHandler(this.MenuOption_Click);
             // 
@@ -149,21 +149,21 @@
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1,
             this.toolStripStatusLabel2});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 558);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 560);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(940, 24);
+            this.statusStrip1.Size = new System.Drawing.Size(940, 22);
             this.statusStrip1.TabIndex = 1;
             this.statusStrip1.Text = "statusStrip1";
             // 
             // toolStripStatusLabel1
             // 
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(0, 18);
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(0, 16);
             // 
             // toolStripStatusLabel2
             // 
             this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            this.toolStripStatusLabel2.Size = new System.Drawing.Size(0, 18);
+            this.toolStripStatusLabel2.Size = new System.Drawing.Size(0, 16);
             // 
             // panel1
             // 
@@ -173,7 +173,7 @@
             this.panel1.Margin = new System.Windows.Forms.Padding(2);
             this.panel1.Name = "panel1";
             this.panel1.Padding = new System.Windows.Forms.Padding(8);
-            this.panel1.Size = new System.Drawing.Size(940, 527);
+            this.panel1.Size = new System.Drawing.Size(940, 529);
             this.panel1.TabIndex = 3;
             // 
             // richTextBox1
@@ -188,7 +188,7 @@
             this.richTextBox1.Name = "richTextBox1";
             this.richTextBox1.ReadOnly = true;
             this.richTextBox1.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.richTextBox1.Size = new System.Drawing.Size(924, 511);
+            this.richTextBox1.Size = new System.Drawing.Size(924, 513);
             this.richTextBox1.TabIndex = 3;
             this.richTextBox1.Text = resources.GetString("richTextBox1.Text");
             this.richTextBox1.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.RichTextBox1_LinkClicked);
