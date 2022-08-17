@@ -148,6 +148,8 @@
       <DependentUpon>App.settings</DependentUpon>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="TargetProcess.cs" />
+    <Compile Include="UIAutomationLib.cs" />
     <EmbeddedResource Include="AppConfig.resx">
       <DependentUpon>AppConfig.cs</DependentUpon>
     </EmbeddedResource>
@@ -183,6 +185,7 @@
       <LastGenOutput>App.Designer.cs</LastGenOutput>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="user.config" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
