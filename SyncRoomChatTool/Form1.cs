@@ -471,7 +471,7 @@ namespace SyncRoomChatTool
             }
         }
 
-        private static void SpeechSynthe(CommentText commentObj)
+        private static async void SpeechSynthe(CommentText commentObj)
         {
             //多分引っかからないとは思いつつ。
             if (string.IsNullOrEmpty(commentObj.Comment))
@@ -487,6 +487,7 @@ namespace SyncRoomChatTool
                 if (commentDiff.TotalSeconds > 5)
                 {
                     SystemSounds.Asterisk.Play();
+                    await Task.Delay(500);
                 }
             }
 
