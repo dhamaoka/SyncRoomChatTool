@@ -1,6 +1,6 @@
 # SyncRoomChatTool
 ## なにするもの？
-[YAMAHA SyncRoom](https://syncroom.yamaha.com) のチャットを読み上げるツール。
+[YAMAHA SyncRoom](https://syncroom.yamaha.com) のチャットを読み上げるツール。SyncRoomチャット読み上げちゃん。
 
 基本、チャット民が**ループバック機能**を使って、部屋の他者に気がついてもらう為のツールではあります。
 
