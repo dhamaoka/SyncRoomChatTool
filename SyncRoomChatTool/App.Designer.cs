@@ -12,7 +12,7 @@ namespace SyncRoomChatTool {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.2.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.4.0.0")]
     internal sealed partial class App : global::System.Configuration.ApplicationSettingsBase {
         
         private static App defaultInstance = ((App)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new App())));
@@ -25,7 +25,7 @@ namespace SyncRoomChatTool {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("500")]
+        [global::System.Configuration.DefaultSettingValueAttribute("950")]
         public decimal waitTiming {
             get {
                 return ((decimal)(this["waitTiming"]));
@@ -140,6 +140,78 @@ namespace SyncRoomChatTool {
             }
             set {
                 this["cutLength"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string twitcastUserName {
+            get {
+                return ((string)(this["twitcastUserName"]));
+            }
+            set {
+                this["twitcastUserName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool readName {
+            get {
+                return ((bool)(this["readName"]));
+            }
+            set {
+                this["readName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AccessToken {
+            get {
+                return ((string)(this["AccessToken"]));
+            }
+            set {
+                this["AccessToken"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("4189771.35cba219c8a4e7ec7ebb2d899b5b043dde67a6703a6a782f19939c3ba5e87397")]
+        public string clientId {
+            get {
+                return ((string)(this["clientId"]));
+            }
+            set {
+                this["clientId"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool useTwitcasting {
+            get {
+                return ((bool)(this["useTwitcasting"]));
+            }
+            set {
+                this["useTwitcasting"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://apiv2.twitcasting.tv/")]
+        public string twitCastingBaseAddress {
+            get {
+                return ((string)(this["twitCastingBaseAddress"]));
+            }
+            set {
+                this["twitCastingBaseAddress"] = value;
             }
         }
     }

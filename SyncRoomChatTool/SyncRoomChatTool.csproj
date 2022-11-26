@@ -149,15 +149,24 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
     <Compile Include="TargetProcess.cs" />
+    <Compile Include="Twitcasting.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Twitcasting.Designer.cs">
+      <DependentUpon>Twitcasting.cs</DependentUpon>
+    </Compile>
     <Compile Include="UIAutomationLib.cs" />
     <EmbeddedResource Include="AppConfig.resx">
       <DependentUpon>AppConfig.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Help.resx">
       <DependentUpon>Help.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -168,6 +177,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="Twitcasting.resx">
+      <DependentUpon>Twitcasting.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="app.config" />
     <None Include="app.manifest" />
     <None Include="packages.config" />
@@ -185,7 +197,6 @@
       <LastGenOutput>App.Designer.cs</LastGenOutput>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="user.config" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">

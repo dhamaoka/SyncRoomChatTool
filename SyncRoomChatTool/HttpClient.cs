@@ -9,7 +9,7 @@ namespace SyncRoomChatTool
 {
     /// <summary>
     /// Serviceとの通信を担当する、HTTPクライアントのサンプル。
-    /// https://iwasiman.hatenablog.com/entry/20210622-CSharp-HttpClient 丸パクリ。不要部分は削除。VOICEVOXはPOST出来りゃいい。
+    /// https://iwasiman.hatenablog.com/entry/20210622-CSharp-HttpClient 丸パクリ。不要部分は削除。VOICEVOXはPOST出来りゃいい。んだが、やっぱりGETも使うのであった。
     /// </summary>
     public class ServiceHttpClient
     {
@@ -17,6 +17,8 @@ namespace SyncRoomChatTool
         /// 通信先のアドレス
         /// </summary>
         private readonly string requestAddress;
+
+        private readonly RequestType reqType;
 
         /// <summary>
         /// C#側のHttpクライアント
@@ -30,14 +32,22 @@ namespace SyncRoomChatTool
         {
         }
 
+        public enum RequestType
+        {
+            none = 0,
+            twitCasting = 1
+        }
+
         /// <summary>
         /// 引数付きのコンストラクタ。こちらを使用します。
         /// 引数には正しいURLが入っていることが前提です。
         /// </summary>
         /// <param Name="requestAddress">リクエストURL</param>
-        public ServiceHttpClient(string requestAddress)
+        /// <param name="reqType">通常（VOICEVOXリクエスト）かツイキャス他か</param>
+        public ServiceHttpClient(string requestAddress, RequestType reqType = RequestType.none)
         {
             this.requestAddress = requestAddress;
+            this.reqType = reqType;
 
             // 通信するメソッドでその都度HttpClientをnewすると毎回ソケットを開いてリソースを消費するため、
             // メンバ変数で使い回す手法を取っています。
@@ -51,7 +61,7 @@ namespace SyncRoomChatTool
         /// <returns>正常：レスポンスのボディ / 異常：null</returns>
         public string Get()
         {
-            String requestEndPoint = requestAddress;
+            String requestEndPoint = this.requestAddress;
             HttpRequestMessage request = this.CreateRequest(HttpMethod.Get, requestEndPoint);
 
             string resBodyStr;
@@ -189,6 +199,12 @@ namespace SyncRoomChatTool
             request.Headers.Add("Accept-Charset", "utf-8");
             // 同じようにして、例えば認証通過後のトークンが "Authorization: Bearer {トークンの文字列}"
             // のように必要なら適宜追加していきます。
+
+            // 対応サービス増やすかは分からんのにEnumにしたが、ここはSwitchにしてねぇと言う。
+            if (this.reqType== RequestType.twitCasting) {
+                request.Headers.Add("X-Api-Version", "2.0");
+                request.Headers.Add("Authorization", $"Bearer {App.Default.AccessToken}");
+            }
             return request;
         }
     }

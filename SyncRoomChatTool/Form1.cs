@@ -6,12 +6,15 @@ using System.Linq;
 using System.Media;
 using System.Net;
 using System.Reflection;
+using System.Security.Policy;
 using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Automation;
 using System.Windows.Forms;
+using System.Xml.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace SyncRoomChatTool
 {
@@ -28,6 +31,63 @@ namespace SyncRoomChatTool
         public Form1()
         {
             InitializeComponent();
+        }
+
+
+        private class TwitCastingUserInfo
+        {
+            public string Supporter_count { get; set; }
+            public string Supporting_count { get; set; }
+            [JsonProperty("user")]
+            public User UserInfo { get;set;}
+        }
+
+        public class User
+        {
+            [JsonProperty("id")]
+            public string Id { get; set; }
+            [JsonProperty("screen_id")]
+            public string Screen_id { get; set; }
+            [JsonProperty("name")]
+            public string Name { get; set; }
+            [JsonProperty("image")]
+            public string Image { get; set; }
+            [JsonProperty("profile")]
+            public string Profile { get; set; }
+            [JsonProperty("level")]
+            public int Level { get; set; }
+            [JsonProperty("last_movie_id")]
+            public string Last_movie_id { get; set; }
+            [JsonProperty("is_live")]
+            public bool Is_live { get; set; }
+            [JsonProperty("Supporter_count")]
+            public int Supporter_count { get; set; }
+            [JsonProperty("supporting_count")]
+            public int Supporting_count { get; set; }
+            [JsonProperty("created")]
+            public int Created { get; set; }
+        }
+
+        public class TwitCastingComment
+        {
+            [JsonProperty("id")]
+            public string Id { get; set; }
+            [JsonProperty("message")]
+            public string Message { get; set; }
+            [JsonProperty("created")]
+            public int Created { get; set; }
+            [JsonProperty("from_user")]
+            public User FromUser { get; set; }
+        }
+
+        public class TwitCastingCommentRoot
+        {
+            [JsonProperty("movie_id")]
+            public string MovieId { get; set; }
+            [JsonProperty("all_count")]
+            public int AllCount { get; set; }
+            [JsonProperty("comments")]
+            public List<TwitCastingComment> Comments { get; set; }
         }
 
         private class SpeakerFromAPI
@@ -65,14 +125,15 @@ namespace SyncRoomChatTool
 
             this.Text += $" {fileVersionInfo.ProductVersion}";
 
-            Menu_EnebleSpeech.Checked = App.Default.canSpeech;
-            Menu_UseVoiceVox.Checked = App.Default.UseVoiceVox;
+            MenuEnableTwitcasting.Checked = App.Default.useTwitcasting;
+            MenuEnebleSpeech.Checked = App.Default.canSpeech;
+            MenuUseVoiceVox.Checked = App.Default.UseVoiceVox;
             richTextBox1.LanguageOption = RichTextBoxLanguageOptions.UIFonts;
             richTextBox1.Font = App.Default.logFont;
             richTextBox1.ZoomFactor = App.Default.zoomFacter;
-            if (App.Default.waitTiming < 100)
+            if (App.Default.waitTiming < 950)
             {
-                App.Default.waitTiming = 100;
+                App.Default.waitTiming = 950;
             }
             if (App.Default.cutLength < 20)
             {
@@ -116,9 +177,11 @@ namespace SyncRoomChatTool
                     try
                     {
                         //自動起動をトライするが、失敗したって平気さ。知らねぇよ。
-                        ProcessStartInfo processStartInfo = new ProcessStartInfo();
-                        processStartInfo.FileName = App.Default.VoiceVoxPath;
-                        processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                        ProcessStartInfo processStartInfo = new ProcessStartInfo
+                        {
+                            FileName = App.Default.VoiceVoxPath,
+                            WindowStyle = ProcessWindowStyle.Hidden
+                        };
                         Process.Start(processStartInfo);
                         await Task.Delay(3000);
                     }
@@ -138,7 +201,7 @@ namespace SyncRoomChatTool
                     url += "/";
                 }
                 url += "speakers";
-                var client = new ServiceHttpClient(url);
+                var client = new ServiceHttpClient(url,ServiceHttpClient.RequestType.none);
                 var ret = client.Get();
                 if (ret != null)
                 {
@@ -162,6 +225,129 @@ namespace SyncRoomChatTool
             _ = CheckProcess("SYNCROOM", this.statusStrip1, this.richTextBox1);
         }
 
+        /// <summary>
+        /// APIをどついてツイキャスのコメントをチェックする。
+        /// </summary>
+        static void CheckTwitCasting(ref string LastTwitCastingComment, ref string NowTwitCastingComment)
+        {
+
+            if (App.Default.useTwitcasting == false) 
+            {
+                return;
+            }
+
+            if (System.String.IsNullOrEmpty(App.Default.AccessToken))
+            {
+                return;
+            }
+
+            if (System.String.IsNullOrEmpty(App.Default.twitcastUserName))
+            {
+                return;
+            }
+
+            if (System.String.IsNullOrEmpty(App.Default.twitCastingBaseAddress))
+            {
+                return;
+            }
+
+            string baseUrl = App.Default.twitCastingBaseAddress;
+                
+            if (baseUrl.Substring(baseUrl.Length - 1, 1) != "/")
+            {
+                baseUrl += "/";
+            }
+
+            // User情報の取得
+            string url = baseUrl + $"users/{App.Default.twitcastUserName}";
+            var client = new ServiceHttpClient(url,ServiceHttpClient.RequestType.twitCasting);
+            var ret = client.Get();
+            TwitCastingUserInfo userJson = null;
+            string lastMovieId="";
+
+            if (ret != null)
+            {
+                //Jsonのデシリアライズ。LastMovieIdの取得
+                userJson = JsonConvert.DeserializeObject<TwitCastingUserInfo>(ret.ToString());
+                lastMovieId = userJson.UserInfo.Last_movie_id;
+            }
+
+            if (userJson == null)
+            {
+                return;
+            }
+
+            if (System.String.IsNullOrEmpty(lastMovieId))
+            {
+                return;
+            }
+
+            // Movieが生きてるか死んでるか。
+#if DEBUG == false
+            if (userJson.UserInfo.Is_live == false)
+            {
+                return;
+            }
+#endif               
+            // 最新配信の取得
+            url = baseUrl + $"movies/{lastMovieId}/comments?&limit=3";
+            client = new ServiceHttpClient(url, ServiceHttpClient.RequestType.twitCasting);
+            ret = client.Get();
+            TwitCastingCommentRoot commentsJson = null;
+
+            string LastTwitCastingName = "";
+            if (ret != null)
+            {
+                //Jsonのデシリアライズ。LastMovieIdの取得
+                commentsJson = JsonConvert.DeserializeObject<TwitCastingCommentRoot>(ret.ToString());
+                NowTwitCastingComment = commentsJson.Comments[0].Message;
+            }
+
+            if (App.Default.readName)
+            {
+                LastTwitCastingName = commentsJson.Comments[0].FromUser.Name;
+                NowTwitCastingComment = LastTwitCastingName + " " + NowTwitCastingComment;
+            }
+            NowTwitCastingComment = LastTwitCastingName + ":" + NowTwitCastingComment;
+
+            if (System.String.IsNullOrEmpty(NowTwitCastingComment))
+            {   
+                return;
+            }
+
+            DateTime lastDt = DateTime.Now;
+            DateTime newDt = DateTime.Now;
+            CommentText CommentObj = new CommentText(NowTwitCastingComment)
+            {
+                LastCommentTime = lastDt,
+                NowCommentTime = newDt
+            };
+
+            //リンクの場合
+            if (CommentObj.IsLink)
+            {
+                CommentObj.Comment = "リンクが張られました。";
+                CommentObj.Lang = 0;
+                if (File.Exists(App.Default.linkWaveFilePath))
+                {
+                    SoundPlayer player = new SoundPlayer(App.Default.linkWaveFilePath);
+                    //非同期再生する
+                    player.Play();
+                    LastTwitCastingComment = NowTwitCastingComment;
+                    return;
+                }
+            }
+            //空行でない & 連続同一コメントでないこと。
+            if (CommentObj.IsBlank == false && LastTwitCastingComment != NowTwitCastingComment)
+            {
+                //音声用の別処理をぶっ込む。
+                SpeechSynthe(CommentObj);
+            }
+
+            LastTwitCastingComment = NowTwitCastingComment;
+        }
+
+
         static async Task CheckProcess(string ProcessName, StatusStrip ststp, RichTextBox logView)
         {
             /*
@@ -172,23 +358,25 @@ namespace SyncRoomChatTool
             string oldLog = "";
             string lastComment = "";
             DateTime lastDt = DateTime.Now;
-            DateTime newDt = DateTime.Now;
+            DateTime newDt;
+
+            string LastTwitCastingComment = "";
+            string NowTwitCastingComment = "";
 
             while (true)
             {
-                TargetProcess tp = new TargetProcess(ProcessName);
-                await Task.Delay((int)App.Default.waitTiming);
+                TargetProcess targetProc = new TargetProcess(ProcessName);
 
                 string toolMessage;
 
-                if (tp.IsAlive)
+                if (targetProc.IsAlive)
                 {
                     toolMessage = "は起動されています。";
                     try
                     {
-                        //AutomationElement synroomElement = ui.GetMainFrameElement(tp.Proc);
+                        //AutomationElement synroomElement = ui.GetMainFrameElement(targetProc.Proc);
 
-                        IntPtr chatwHnd = ui.FindHWndByCaptionAndProcessID("チャット", tp.Id);
+                        IntPtr chatwHnd = ui.FindHWndByCaptionAndProcessID("チャット", targetProc.Id);
 
                         if (chatwHnd != IntPtr.Zero)
                         {
@@ -205,11 +393,12 @@ namespace SyncRoomChatTool
                             if (match.Success)
                             {
                                 //チャットログに変化があった場合。
+                                string newComment = "";
+                                newDt = DateTime.Now;
+
                                 if (oldLog != vp.Current.Value)
                                 {
                                     oldLog = vp.Current.Value;
-                                    string newComment = "";
-                                    newDt = DateTime.Now;
                                     logView.Text = vp.Current.Value;
 
                                     //改行で区切って、一番最後を最新コメントとする。
@@ -217,9 +406,11 @@ namespace SyncRoomChatTool
 
                                     newComment = ary[ary.Count() - 1];
 
-                                    CommentText CommentObj = new CommentText(newComment);
-                                    CommentObj.LastCommentTime = lastDt;
-                                    CommentObj.NowCommentTime = newDt;
+                                    CommentText CommentObj = new CommentText(newComment)
+                                    {
+                                        LastCommentTime = lastDt,
+                                        NowCommentTime = newDt
+                                    };
 
                                     if (App.Default.canSpeech)
                                     {
@@ -244,6 +435,21 @@ namespace SyncRoomChatTool
                                             //音声用の別処理をぶっ込む。
                                             SpeechSynthe(CommentObj);
                                         }
+                                        else
+                                        {
+                                            // テストモード（音声ファイルは出力しない）で空打ち（エンジンには合成させてる）すると
+                                            // 多少は速くなるかなぁと思ったが、そんなに変わらん気もする。
+                                            // ここが有効だと、監視中ずーっとエンジン動かしてることにはなるんだよねぇ。
+                                            // 一回リリースしてみるか
+                                            
+                                            CommentObj = new CommentText("空打ち")
+                                            {
+                                                LastCommentTime = DateTime.Now,
+                                                NowCommentTime = DateTime.Now
+                                            };
+                                            SpeechSynthe(CommentObj, true);
+                                            
+                                        }
                                     }
 
                                     lastComment = newComment;
@@ -252,7 +458,7 @@ namespace SyncRoomChatTool
                             }
                         }
                         else
-                        {
+                        {                            
                             ststp.Items[1].Text = "チャットログ待機中…";
                         }
                     }
@@ -276,13 +482,17 @@ namespace SyncRoomChatTool
                     lastComment = "";
                 }
                 ststp.Items[0].Text = ProcessName + toolMessage;
+
+                CheckTwitCasting(ref LastTwitCastingComment, ref NowTwitCastingComment);
+
+                await Task.Delay((int)App.Default.waitTiming);
             }
         }
 
         private class CommentText
         {
 
-            static readonly int[] randTable = new int[] { 0, 8, 10, 14, 20, 21, 12, 13, 11, 3 };
+            static readonly int[] randTable = new int[] { 0, 8, 10, 14, 20, 21, 12, 13, 11, 3, 29, 30, 23, 27 };
             static readonly string blankLineUserName = "改行コピペ野郎";
 
             public bool IsBlank;
@@ -471,7 +681,7 @@ namespace SyncRoomChatTool
             }
         }
 
-        private static async void SpeechSynthe(CommentText commentObj)
+        private static async void SpeechSynthe(CommentText commentObj, bool testMode = false)
         {
             //多分引っかからないとは思いつつ。
             if (string.IsNullOrEmpty(commentObj.Comment))
@@ -487,7 +697,7 @@ namespace SyncRoomChatTool
                 if (commentDiff.TotalSeconds > 5)
                 {
                     SystemSounds.Asterisk.Play();
-                    await Task.Delay(500);
+                    await Task.Delay(100);
                 }
             }
 
@@ -498,7 +708,7 @@ namespace SyncRoomChatTool
 
             if (App.Default.UseVoiceVox == true && commentObj.Lang == 0)
             {
-                SpeechVOICEVOX(commentObj);
+                SpeechVOICEVOX(commentObj, testMode);
                 return;
             }
 
@@ -520,7 +730,7 @@ namespace SyncRoomChatTool
             synth.SpeakAsync(commentObj.Comment);
         }
 
-        private static void SpeechVOICEVOX(CommentText commentObj)
+        private static void SpeechVOICEVOX(CommentText commentObj, bool testMode = false)
         {
             string baseUrl = App.Default.VoiceVoxAddress;
             string url;
@@ -545,14 +755,24 @@ namespace SyncRoomChatTool
 
             url = baseUrl + $"audio_query?text='{commentObj.Comment}'&speaker={commentObj.StyleId}";
 
-            var client = new ServiceHttpClient(url);
+            var client = new ServiceHttpClient(url,ServiceHttpClient.RequestType.none);
             String QueryResponce = "";
             var ret = client.Post(ref QueryResponce, "");
+
+            if (ret == null)
+            {
+                return;
+            }
+
+            if (testMode)
+            {
+                return;
+            }
 
             if (ret.StatusCode.Equals(HttpStatusCode.OK))
             {
                 url = baseUrl + $"synthesis?speaker={commentObj.StyleId}";
-                client = new ServiceHttpClient(url);
+                client = new ServiceHttpClient(url,ServiceHttpClient.RequestType.none);
                 string wavFile = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
                 ret = client.Post(ref QueryResponce, wavFile);
                 if (ret.StatusCode.Equals(HttpStatusCode.OK))
@@ -606,6 +826,7 @@ namespace SyncRoomChatTool
             App.Default.zoomFacter = richTextBox1.ZoomFactor;
             App.Default.logFont = richTextBox1.Font;
             App.Default.windowSize = this.Size;
+            App.Default.useTwitcasting = MenuEnableTwitcasting.Checked;
             App.Default.Save();
         }
 
@@ -619,13 +840,13 @@ namespace SyncRoomChatTool
 
         private void Menu_EnebleSpeech_Click(object sender, EventArgs e)
         {
-            App.Default.canSpeech = Menu_EnebleSpeech.Checked;
+            App.Default.canSpeech = MenuEnebleSpeech.Checked;
             App.Default.Save();
         }
 
         private void Menu_VoiceVox_Click(object sender, EventArgs e)
         {
-            App.Default.UseVoiceVox = Menu_UseVoiceVox.Checked;
+            App.Default.UseVoiceVox = MenuUseVoiceVox.Checked;
             App.Default.Save();
         }
 
@@ -636,6 +857,29 @@ namespace SyncRoomChatTool
             help.Height = (int)Math.Floor(this.Height * 0.9);
 
             help.ShowDialog();
+        }
+
+        private void MenuSettingTwitcasting_Click(object sender, EventArgs e)
+        {
+            Twitcasting twitCasting = new Twitcasting();
+            if (twitCasting.ShowDialog() == DialogResult.OK)
+            {
+                App.Default.AccessToken = twitCasting.AccessToken;
+                App.Default.twitcastUserName = twitCasting.TwitcastUserName;
+                App.Default.readName = twitCasting.ReadName;
+                App.Default.Save();
+            }
+        }
+
+        private void MenuEnableTwitcasting_Click(object sender, EventArgs e)
+        {
+            App.Default.useTwitcasting = MenuEnableTwitcasting.Checked;
+            App.Default.Save();
+        }
+
+        private void MenuTwitcasting_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

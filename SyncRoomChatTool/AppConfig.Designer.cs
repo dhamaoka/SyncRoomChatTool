@@ -88,7 +88,7 @@
             0,
             0});
             this.numWait.Minimum = new decimal(new int[] {
-            10,
+            950,
             0,
             0,
             0});
@@ -97,7 +97,7 @@
             this.numWait.TabIndex = 1;
             this.numWait.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.numWait.ThousandsSeparator = true;
-            this.toolTip1.SetToolTip(this.numWait, "監視間隔を数字で入力します。ミリ秒です。\r\n10ミリ秒～10,000ミリ秒（10秒）です。");
+            this.toolTip1.SetToolTip(this.numWait, "監視間隔を数字で入力します。ミリ秒です。\r\n950ミリ秒～10,000ミリ秒（10秒）です。");
             this.numWait.Value = new decimal(new int[] {
             10000,
             0,

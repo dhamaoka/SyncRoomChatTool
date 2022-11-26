@@ -120,7 +120,13 @@
   <metadata name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>
-  <metadata name="fontDialog1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>130, 17</value>
-  </metadata>
+  <data name="label4.Text" xml:space="preserve">
+    <value>AccessTokenは初回のみ設定が必要です。一回取得して設定できればいいです。
+
+以下のURLリンクをクリックするとブラウザが起動します。
+「連携アプリの許可」をクリックしてください。その後表示される画面ではなく、
+アドレスバーの中にある「access_token=」と「&amp;token_type」の間の文字をコピーして
+テキストボックスに入れて下さい。
+間違ってクリックしてもトークンが更新されますので、必ずコピペして設定してください。</value>
+  </data>
 </root>

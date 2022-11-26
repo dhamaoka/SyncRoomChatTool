@@ -36,8 +36,11 @@
             this.MenuFont = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuOption = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuSpeech = new System.Windows.Forms.ToolStripMenuItem();
-            this.Menu_EnebleSpeech = new System.Windows.Forms.ToolStripMenuItem();
-            this.Menu_UseVoiceVox = new System.Windows.Forms.ToolStripMenuItem();
+            this.MenuEnebleSpeech = new System.Windows.Forms.ToolStripMenuItem();
+            this.MenuUseVoiceVox = new System.Windows.Forms.ToolStripMenuItem();
+            this.MenuTwitcasting = new System.Windows.Forms.ToolStripMenuItem();
+            this.MenuEnableTwitcasting = new System.Windows.Forms.ToolStripMenuItem();
+            this.MenuSettingTwitcasting = new System.Windows.Forms.ToolStripMenuItem();
             this.Menu_Help = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
@@ -57,6 +60,7 @@
             this.MenuFile,
             this.MenuTool,
             this.MenuSpeech,
+            this.MenuTwitcasting,
             this.Menu_Help});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
@@ -107,32 +111,57 @@
             // MenuSpeech
             // 
             this.MenuSpeech.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.Menu_EnebleSpeech,
-            this.Menu_UseVoiceVox});
+            this.MenuEnebleSpeech,
+            this.MenuUseVoiceVox});
             this.MenuSpeech.Font = new System.Drawing.Font("Yu Gothic UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.MenuSpeech.Name = "MenuSpeech";
             this.MenuSpeech.Size = new System.Drawing.Size(92, 27);
             this.MenuSpeech.Text = "スピーチ(&S)";
             // 
-            // Menu_EnebleSpeech
+            // MenuEnebleSpeech
             // 
-            this.Menu_EnebleSpeech.Checked = true;
-            this.Menu_EnebleSpeech.CheckOnClick = true;
-            this.Menu_EnebleSpeech.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.Menu_EnebleSpeech.Name = "Menu_EnebleSpeech";
-            this.Menu_EnebleSpeech.Size = new System.Drawing.Size(239, 28);
-            this.Menu_EnebleSpeech.Text = "スピーチさせる(&E)";
-            this.Menu_EnebleSpeech.Click += new System.EventHandler(this.Menu_EnebleSpeech_Click);
+            this.MenuEnebleSpeech.Checked = true;
+            this.MenuEnebleSpeech.CheckOnClick = true;
+            this.MenuEnebleSpeech.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.MenuEnebleSpeech.Name = "MenuEnebleSpeech";
+            this.MenuEnebleSpeech.Size = new System.Drawing.Size(239, 28);
+            this.MenuEnebleSpeech.Text = "スピーチさせる(&E)";
+            this.MenuEnebleSpeech.Click += new System.EventHandler(this.Menu_EnebleSpeech_Click);
             // 
-            // Menu_UseVoiceVox
+            // MenuUseVoiceVox
             // 
-            this.Menu_UseVoiceVox.Checked = true;
-            this.Menu_UseVoiceVox.CheckOnClick = true;
-            this.Menu_UseVoiceVox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.Menu_UseVoiceVox.Name = "Menu_UseVoiceVox";
-            this.Menu_UseVoiceVox.Size = new System.Drawing.Size(239, 28);
-            this.Menu_UseVoiceVox.Text = "VOICEVOXを使う(&V)";
-            this.Menu_UseVoiceVox.Click += new System.EventHandler(this.Menu_VoiceVox_Click);
+            this.MenuUseVoiceVox.Checked = true;
+            this.MenuUseVoiceVox.CheckOnClick = true;
+            this.MenuUseVoiceVox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.MenuUseVoiceVox.Name = "MenuUseVoiceVox";
+            this.MenuUseVoiceVox.Size = new System.Drawing.Size(239, 28);
+            this.MenuUseVoiceVox.Text = "VOICEVOXを使う(&V)";
+            this.MenuUseVoiceVox.Click += new System.EventHandler(this.Menu_VoiceVox_Click);
+            // 
+            // MenuTwitcasting
+            // 
+            this.MenuTwitcasting.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.MenuEnableTwitcasting,
+            this.MenuSettingTwitcasting});
+            this.MenuTwitcasting.Name = "MenuTwitcasting";
+            this.MenuTwitcasting.Size = new System.Drawing.Size(126, 27);
+            this.MenuTwitcasting.Text = "ツイキャス連携(&C)";
+            this.MenuTwitcasting.Click += new System.EventHandler(this.MenuTwitcasting_Click);
+            // 
+            // MenuEnableTwitcasting
+            // 
+            this.MenuEnableTwitcasting.CheckOnClick = true;
+            this.MenuEnableTwitcasting.Name = "MenuEnableTwitcasting";
+            this.MenuEnableTwitcasting.Size = new System.Drawing.Size(224, 26);
+            this.MenuEnableTwitcasting.Text = "連携する(&R)";
+            this.MenuEnableTwitcasting.Click += new System.EventHandler(this.MenuEnableTwitcasting_Click);
+            // 
+            // MenuSettingTwitcasting
+            // 
+            this.MenuSettingTwitcasting.Name = "MenuSettingTwitcasting";
+            this.MenuSettingTwitcasting.Size = new System.Drawing.Size(224, 26);
+            this.MenuSettingTwitcasting.Text = "ツイキャス設定(&O)";
+            this.MenuSettingTwitcasting.Click += new System.EventHandler(this.MenuSettingTwitcasting_Click);
             // 
             // Menu_Help
             // 
@@ -232,9 +261,12 @@
         public System.Windows.Forms.ToolStripMenuItem MenuTool;
         private System.Windows.Forms.ToolStripMenuItem MenuFont;
         private System.Windows.Forms.FontDialog fontDialog1;
-        private System.Windows.Forms.ToolStripMenuItem Menu_UseVoiceVox;
-        private System.Windows.Forms.ToolStripMenuItem Menu_EnebleSpeech;
+        private System.Windows.Forms.ToolStripMenuItem MenuUseVoiceVox;
+        private System.Windows.Forms.ToolStripMenuItem MenuEnebleSpeech;
         private System.Windows.Forms.ToolStripMenuItem Menu_Help;
+        private System.Windows.Forms.ToolStripMenuItem MenuTwitcasting;
+        private System.Windows.Forms.ToolStripMenuItem MenuEnableTwitcasting;
+        private System.Windows.Forms.ToolStripMenuItem MenuSettingTwitcasting;
     }
 }
 

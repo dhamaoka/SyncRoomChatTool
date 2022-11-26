@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="waitTiming" Type="System.Decimal" Scope="User">
-      <Value Profile="(Default)">500</Value>
+      <Value Profile="(Default)">950</Value>
     </Setting>
     <Setting Name="logFont" Type="System.Drawing.Font" Scope="User">
       <Value Profile="(Default)">MS UI Gothic, 10.2pt</Value>
@@ -31,6 +31,24 @@
     </Setting>
     <Setting Name="cutLength" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">30</Value>
+    </Setting>
+    <Setting Name="twitcastUserName" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="readName" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="AccessToken" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="clientId" Type="System.String" Scope="User">
+      <Value Profile="(Default)">4189771.35cba219c8a4e7ec7ebb2d899b5b043dde67a6703a6a782f19939c3ba5e87397</Value>
+    </Setting>
+    <Setting Name="useTwitcasting" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="twitCastingBaseAddress" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://apiv2.twitcasting.tv/</Value>
     </Setting>
   </Settings>
 </SettingsFile>
