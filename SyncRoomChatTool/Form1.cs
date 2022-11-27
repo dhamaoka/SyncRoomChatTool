@@ -300,6 +300,9 @@ namespace SyncRoomChatTool
             {
                 //Jsonのデシリアライズ。LastMovieIdの取得
                 commentsJson = JsonConvert.DeserializeObject<TwitCastingCommentRoot>(ret.ToString());
+                if (commentsJson.Comments.Count < 1) {
+                    return;
+                }
                 NowTwitCastingComment = commentsJson.Comments[0].Message;
             }
 

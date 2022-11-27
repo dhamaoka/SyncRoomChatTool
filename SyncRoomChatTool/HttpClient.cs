@@ -73,6 +73,7 @@ namespace SyncRoomChatTool
             try
             {
                 response = httpClient.SendAsync(request);
+                response.Wait(1000);
                 resBodyStr = response.Result.Content.ReadAsStringAsync().Result;
                 resStatusCoode = response.Result.StatusCode;
             }
