@@ -25,7 +25,7 @@ namespace SyncRoomChatTool {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("950")]
+        [global::System.Configuration.DefaultSettingValueAttribute("500")]
         public decimal waitTiming {
             get {
                 return ((decimal)(this["waitTiming"]));

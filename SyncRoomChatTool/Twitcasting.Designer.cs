@@ -33,7 +33,6 @@
             this.buttonCancel = new System.Windows.Forms.Button();
             this.buttonOK = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
             this.txtTwitcastUserName = new System.Windows.Forms.TextBox();
             this.chkReadName = new System.Windows.Forms.CheckBox();
             this.label3 = new System.Windows.Forms.Label();
@@ -77,30 +76,24 @@
             this.label1.TabIndex = 0;
             this.label1.Text = "配信ユーザー名(&U)";
             // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(27, 67);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(149, 15);
-            this.label2.TabIndex = 2;
-            this.label2.Text = "コメント名の読み上げ(&E)";
-            // 
             // txtTwitcastUserName
             // 
-            this.txtTwitcastUserName.Location = new System.Drawing.Point(239, 23);
+            this.txtTwitcastUserName.Location = new System.Drawing.Point(203, 23);
             this.txtTwitcastUserName.Name = "txtTwitcastUserName";
-            this.txtTwitcastUserName.Size = new System.Drawing.Size(157, 22);
+            this.txtTwitcastUserName.Size = new System.Drawing.Size(139, 22);
             this.txtTwitcastUserName.TabIndex = 1;
             this.toolTip1.SetToolTip(this.txtTwitcastUserName, "配信者の名前を指定します。基本自分のツイキャス名。");
             // 
             // chkReadName
             // 
             this.chkReadName.AutoSize = true;
-            this.chkReadName.Location = new System.Drawing.Point(239, 67);
+            this.chkReadName.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.chkReadName.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.chkReadName.Location = new System.Drawing.Point(30, 68);
             this.chkReadName.Name = "chkReadName";
-            this.chkReadName.Size = new System.Drawing.Size(18, 17);
+            this.chkReadName.Size = new System.Drawing.Size(171, 19);
             this.chkReadName.TabIndex = 3;
+            this.chkReadName.Text = "コメント名の読み上げ(&E)";
             this.toolTip1.SetToolTip(this.chkReadName, "コメントした人の名前を読み上げる場合にチェックします。");
             this.chkReadName.UseVisualStyleBackColor = true;
             // 
@@ -115,16 +108,16 @@
             // 
             // txtAccessToken
             // 
-            this.txtAccessToken.Location = new System.Drawing.Point(239, 109);
+            this.txtAccessToken.Location = new System.Drawing.Point(203, 109);
             this.txtAccessToken.Name = "txtAccessToken";
-            this.txtAccessToken.Size = new System.Drawing.Size(870, 22);
+            this.txtAccessToken.Size = new System.Drawing.Size(914, 22);
             this.txtAccessToken.TabIndex = 5;
             this.toolTip1.SetToolTip(this.txtAccessToken, "今の所頑張ってAccessトークンを取得してください。やり方はヘルプページを参照のこと。");
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(236, 157);
+            this.label4.Location = new System.Drawing.Point(200, 158);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(490, 105);
             this.label4.TabIndex = 6;
@@ -157,7 +150,6 @@
             this.Controls.Add(this.label3);
             this.Controls.Add(this.chkReadName);
             this.Controls.Add(this.txtTwitcastUserName);
-            this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.buttonCancel);
             this.Controls.Add(this.buttonOK);
@@ -178,7 +170,6 @@
         private System.Windows.Forms.Button buttonCancel;
         private System.Windows.Forms.Button buttonOK;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox txtTwitcastUserName;
         private System.Windows.Forms.CheckBox chkReadName;
         private System.Windows.Forms.Label label3;

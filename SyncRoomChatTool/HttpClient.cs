@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -9,7 +10,7 @@ namespace SyncRoomChatTool
 {
     /// <summary>
     /// Serviceとの通信を担当する、HTTPクライアントのサンプル。
-    /// https://iwasiman.hatenablog.com/entry/20210622-CSharp-HttpClient 丸パクリ。不要部分は削除。VOICEVOXはPOST出来りゃいい。んだが、やっぱりGETも使うのであった。
+    /// https://iwasiman.hatenablog.com/entry/20210622-CSharp-HttpClient ほぼ丸パクリ。不要部分は削除。VOICEVOXはPOST出来りゃいい。んだが、やっぱりGETも使うのであった。
     /// </summary>
     public class ServiceHttpClient
     {
@@ -24,6 +25,8 @@ namespace SyncRoomChatTool
         /// C#側のHttpクライアント
         /// </summary>
         private readonly HttpClient httpClient;
+        private readonly HttpClient httpClient2;
+        private readonly HttpClient httpClient3;
 
         /// <summary>
         /// デフォルトコンストラクタ。外部からは呼び出せません。
@@ -35,7 +38,8 @@ namespace SyncRoomChatTool
         public enum RequestType
         {
             none = 0,
-            twitCasting = 1
+            userInfo = 1,
+            commentInfo = 2
         }
 
         /// <summary>
@@ -51,7 +55,21 @@ namespace SyncRoomChatTool
 
             // 通信するメソッドでその都度HttpClientをnewすると毎回ソケットを開いてリソースを消費するため、
             // メンバ変数で使い回す手法を取っています。
-            this.httpClient = new HttpClient();
+            switch (reqType)
+            {
+                case RequestType.none:                   
+                    this.httpClient = new HttpClient();
+                    break;
+                case RequestType.userInfo:
+                    this.httpClient2 = new HttpClient();
+                    break;
+                case RequestType.commentInfo:
+                    this.httpClient3 = new HttpClient();
+                    break;
+                default:
+                    this.httpClient = new HttpClient();
+                    break;
+            }
         }
 
         /// <summary>
@@ -72,10 +90,30 @@ namespace SyncRoomChatTool
             // 戻り値はTask<HttpResponseMessage>で、変数名.ResultとするとSystem.Net.Http.HttpResponseMessageクラスが取れます。
             try
             {
-                response = httpClient.SendAsync(request);
-                response.Wait(1000);
+                switch (reqType)
+                {
+                    case RequestType.none:
+                        response = httpClient.SendAsync(request);
+                        break;
+                    case RequestType.userInfo:
+                        response = httpClient2.SendAsync(request);
+                        break;
+                    case RequestType.commentInfo:
+                        response = httpClient3.SendAsync(request);
+                        break;
+                    default:
+                        response = httpClient.SendAsync(request);
+                        break;
+                }
+                //response.Wait(1000);
                 resBodyStr = response.Result.Content.ReadAsStringAsync().Result;
                 resStatusCoode = response.Result.StatusCode;
+                if (reqType == RequestType.commentInfo)
+                {
+#if DEBUG
+                    Debug.WriteLine(response.Result.Headers);
+#endif
+                }
             }
             catch (HttpRequestException e)
             {
@@ -117,7 +155,21 @@ namespace SyncRoomChatTool
             Task<HttpResponseMessage> response;
             try
             {
-                response = httpClient.SendAsync(request);
+                switch (reqType)
+                {
+                    case RequestType.none:
+                        response = httpClient.SendAsync(request);
+                        break;
+                    case RequestType.userInfo:
+                        response = httpClient2.SendAsync(request);
+                        break;
+                    case RequestType.commentInfo:
+                        response = httpClient3.SendAsync(request);
+                        break;
+                    default:
+                        response = httpClient.SendAsync(request);
+                        break;
+                }
 
                 if (!string.IsNullOrEmpty(QueryResponce))
                 {
@@ -202,7 +254,7 @@ namespace SyncRoomChatTool
             // のように必要なら適宜追加していきます。
 
             // 対応サービス増やすかは分からんのにEnumにしたが、ここはSwitchにしてねぇと言う。
-            if (this.reqType== RequestType.twitCasting) {
+            if (this.reqType != RequestType.none) {
                 request.Headers.Add("X-Api-Version", "2.0");
                 request.Headers.Add("Authorization", $"Bearer {App.Default.AccessToken}");
             }

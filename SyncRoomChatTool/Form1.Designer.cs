@@ -146,20 +146,19 @@
             this.MenuTwitcasting.Name = "MenuTwitcasting";
             this.MenuTwitcasting.Size = new System.Drawing.Size(126, 27);
             this.MenuTwitcasting.Text = "ツイキャス連携(&C)";
-            this.MenuTwitcasting.Click += new System.EventHandler(this.MenuTwitcasting_Click);
             // 
             // MenuEnableTwitcasting
             // 
             this.MenuEnableTwitcasting.CheckOnClick = true;
             this.MenuEnableTwitcasting.Name = "MenuEnableTwitcasting";
-            this.MenuEnableTwitcasting.Size = new System.Drawing.Size(224, 26);
+            this.MenuEnableTwitcasting.Size = new System.Drawing.Size(197, 26);
             this.MenuEnableTwitcasting.Text = "連携する(&R)";
             this.MenuEnableTwitcasting.Click += new System.EventHandler(this.MenuEnableTwitcasting_Click);
             // 
             // MenuSettingTwitcasting
             // 
             this.MenuSettingTwitcasting.Name = "MenuSettingTwitcasting";
-            this.MenuSettingTwitcasting.Size = new System.Drawing.Size(224, 26);
+            this.MenuSettingTwitcasting.Size = new System.Drawing.Size(197, 26);
             this.MenuSettingTwitcasting.Text = "ツイキャス設定(&O)";
             this.MenuSettingTwitcasting.Click += new System.EventHandler(this.MenuSettingTwitcasting_Click);
             // 

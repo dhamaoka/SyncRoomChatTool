@@ -6,15 +6,12 @@ using System.Linq;
 using System.Media;
 using System.Net;
 using System.Reflection;
-using System.Security.Policy;
 using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Automation;
 using System.Windows.Forms;
-using System.Xml.Linq;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace SyncRoomChatTool
 {
@@ -27,12 +24,16 @@ namespace SyncRoomChatTool
         }
 
         private static readonly int commentLimit = (int)App.Default.cutLength;
+        private static string LastTwitCastingComment = "";
+        private static string NowTwitCastingComment = "";
+
+        private static bool isAlive = false;
+        private static string lastMovieId = "";
 
         public Form1()
         {
             InitializeComponent();
         }
-
 
         private class TwitCastingUserInfo
         {
@@ -131,9 +132,9 @@ namespace SyncRoomChatTool
             richTextBox1.LanguageOption = RichTextBoxLanguageOptions.UIFonts;
             richTextBox1.Font = App.Default.logFont;
             richTextBox1.ZoomFactor = App.Default.zoomFacter;
-            if (App.Default.waitTiming < 950)
+            if (App.Default.waitTiming < 100)
             {
-                App.Default.waitTiming = 950;
+                App.Default.waitTiming = 100;
             }
             if (App.Default.cutLength < 20)
             {
@@ -222,134 +223,10 @@ namespace SyncRoomChatTool
                 }
             }
 
+            _ = UserInfo();
+            _ = CommentInfo();
             _ = CheckProcess("SYNCROOM", this.statusStrip1, this.richTextBox1);
         }
-
-        /// <summary>
-        /// APIをどついてツイキャスのコメントをチェックする。
-        /// </summary>
-        static void CheckTwitCasting(ref string LastTwitCastingComment, ref string NowTwitCastingComment)
-        {
-
-            if (App.Default.useTwitcasting == false) 
-            {
-                return;
-            }
-
-            if (System.String.IsNullOrEmpty(App.Default.AccessToken))
-            {
-                return;
-            }
-
-            if (System.String.IsNullOrEmpty(App.Default.twitcastUserName))
-            {
-                return;
-            }
-
-            if (System.String.IsNullOrEmpty(App.Default.twitCastingBaseAddress))
-            {
-                return;
-            }
-
-            string baseUrl = App.Default.twitCastingBaseAddress;
-                
-            if (baseUrl.Substring(baseUrl.Length - 1, 1) != "/")
-            {
-                baseUrl += "/";
-            }
-
-            // User情報の取得
-            string url = baseUrl + $"users/{App.Default.twitcastUserName}";
-            var client = new ServiceHttpClient(url,ServiceHttpClient.RequestType.twitCasting);
-            var ret = client.Get();
-            TwitCastingUserInfo userJson = null;
-            string lastMovieId="";
-
-            if (ret != null)
-            {
-                //Jsonのデシリアライズ。LastMovieIdの取得
-                userJson = JsonConvert.DeserializeObject<TwitCastingUserInfo>(ret.ToString());
-                lastMovieId = userJson.UserInfo.Last_movie_id;
-            }
-
-            if (userJson == null)
-            {
-                return;
-            }
-
-            if (System.String.IsNullOrEmpty(lastMovieId))
-            {
-                return;
-            }
-
-            // Movieが生きてるか死んでるか。
-#if DEBUG == false
-            if (userJson.UserInfo.Is_live == false)
-            {
-                return;
-            }
-#endif               
-            // 最新配信の取得
-            url = baseUrl + $"movies/{lastMovieId}/comments?&limit=3";
-            client = new ServiceHttpClient(url, ServiceHttpClient.RequestType.twitCasting);
-            ret = client.Get();
-            TwitCastingCommentRoot commentsJson = null;
-
-            string LastTwitCastingName = "";
-            if (ret != null)
-            {
-                //Jsonのデシリアライズ。LastMovieIdの取得
-                commentsJson = JsonConvert.DeserializeObject<TwitCastingCommentRoot>(ret.ToString());
-                if (commentsJson.Comments.Count < 1) {
-                    return;
-                }
-                NowTwitCastingComment = commentsJson.Comments[0].Message;
-            }
-
-            if (App.Default.readName)
-            {
-                LastTwitCastingName = commentsJson.Comments[0].FromUser.Name;
-                NowTwitCastingComment = LastTwitCastingName + " " + NowTwitCastingComment;
-            }
-            NowTwitCastingComment = LastTwitCastingName + ":" + NowTwitCastingComment;
-
-            if (System.String.IsNullOrEmpty(NowTwitCastingComment))
-            {   
-                return;
-            }
-
-            DateTime lastDt = DateTime.Now;
-            DateTime newDt = DateTime.Now;
-            CommentText CommentObj = new CommentText(NowTwitCastingComment)
-            {
-                LastCommentTime = lastDt,
-                NowCommentTime = newDt
-            };
-
-            //リンクの場合
-            if (CommentObj.IsLink)
-            {
-                CommentObj.Comment = "リンクが張られました。";
-                CommentObj.Lang = 0;
-                if (File.Exists(App.Default.linkWaveFilePath))
-                {
-                    SoundPlayer player = new SoundPlayer(App.Default.linkWaveFilePath);
-                    //非同期再生する
-                    player.Play();
-                    LastTwitCastingComment = NowTwitCastingComment;
-                    return;
-                }
-            }
-            //空行でない & 連続同一コメントでないこと。
-            if (CommentObj.IsBlank == false && LastTwitCastingComment != NowTwitCastingComment)
-            {
-                //音声用の別処理をぶっ込む。
-                SpeechSynthe(CommentObj);
-            }
-
-            LastTwitCastingComment = NowTwitCastingComment;
-        }
-
 
         static async Task CheckProcess(string ProcessName, StatusStrip ststp, RichTextBox logView)
         {
@@ -362,9 +239,6 @@ namespace SyncRoomChatTool
             string lastComment = "";
             DateTime lastDt = DateTime.Now;
             DateTime newDt;
-
-            string LastTwitCastingComment = "";
-            string NowTwitCastingComment = "";
 
             while (true)
             {
@@ -465,9 +339,11 @@ namespace SyncRoomChatTool
                             ststp.Items[1].Text = "チャットログ待機中…";
                         }
                     }
-                    catch (ArgumentException agex) { }
-                    //hwnd が見つからなかった系のエラーは握りつぶす系。
-                    //SyncRoomの起動待ち状態で、起動直後で転ける様子。
+                    catch (ArgumentException agex) {
+                        //hwnd が見つからなかった系のエラーは握りつぶす系。
+                        //SyncRoomの起動待ち状態で、起動直後で転ける様子。
+                        ststp.Items[1].Text = $"{agex.Message}";
+                    }
                     catch (Exception ex)
                     {
                         string errMsg = $"\r\nエラーが発生しています。{ex.Message}";
@@ -486,9 +362,176 @@ namespace SyncRoomChatTool
                 }
                 ststp.Items[0].Text = ProcessName + toolMessage;
 
-                CheckTwitCasting(ref LastTwitCastingComment, ref NowTwitCastingComment);
-
                 await Task.Delay((int)App.Default.waitTiming);
+            }
+        }
+
+        static async Task UserInfo()
+        {
+            while (true)
+            {
+
+                if (App.Default.useTwitcasting == false)
+                {
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(App.Default.AccessToken))
+                {
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(App.Default.twitcastUserName))
+                {
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(App.Default.twitCastingBaseAddress))
+                {
+                    return;
+                }
+
+                string baseUrl = App.Default.twitCastingBaseAddress;
+
+                if (baseUrl.Substring(baseUrl.Length - 1, 1) != "/")
+                {
+                    baseUrl += "/";
+                }
+
+                // User情報の取得
+                string url = baseUrl + $"users/{App.Default.twitcastUserName}";
+                var client = new ServiceHttpClient(url, ServiceHttpClient.RequestType.userInfo);
+                var ret = client.Get();
+                TwitCastingUserInfo userJson = null;
+
+                if (ret != null)
+                {
+                    //Jsonのデシリアライズ。LastMovieIdの取得
+                    userJson = JsonConvert.DeserializeObject<TwitCastingUserInfo>(ret.ToString());
+                    lastMovieId = userJson.UserInfo.Last_movie_id;
+                }
+
+                isAlive = false;
+                if (userJson != null)
+                {
+                    if (!string.IsNullOrEmpty(lastMovieId))
+                    {
+                        isAlive = userJson.UserInfo.Is_live;
+                    }
+                }
+
+                await Task.Delay(60000);
+            }
+        }
+
+        /// <summary>
+        /// APIをどついてツイキャスのコメントをチェックする。
+        /// </summary>
+        static async Task CommentInfo()
+        {
+            while(true)
+            {
+                if (App.Default.useTwitcasting == false)
+                {
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(App.Default.AccessToken))
+                {
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(App.Default.twitcastUserName))
+                {
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(App.Default.twitCastingBaseAddress))
+                {
+                    return;
+                }
+
+                string baseUrl = App.Default.twitCastingBaseAddress;
+
+                if (baseUrl.Substring(baseUrl.Length - 1, 1) != "/")
+                {
+                    baseUrl += "/";
+                }
+
+                if (string.IsNullOrEmpty(lastMovieId))
+                {
+                    return;
+                }
+
+                // Movieが生きてるか死んでるか。
+#if DEBUG == false
+            if (isAlive == false)
+            {
+                return;
+            }
+#endif
+                // 最新配信の取得
+                string url = baseUrl + $"movies/{lastMovieId}/comments?&limit=3";
+                var client = new ServiceHttpClient(url, ServiceHttpClient.RequestType.commentInfo);
+                var ret = client.Get();
+                TwitCastingCommentRoot commentsJson = null;
+
+                string LastTwitCastingName = "";
+                if (ret != null)
+                {
+                    //Jsonのデシリアライズ。LastMovieIdの取得
+                    commentsJson = JsonConvert.DeserializeObject<TwitCastingCommentRoot>(ret.ToString());
+                    if (commentsJson.Comments.Count < 1)
+                    {
+                        return;
+                    }
+                    NowTwitCastingComment = commentsJson.Comments[0].Message;
+                }
+
+                if (App.Default.readName)
+                {
+                    LastTwitCastingName = commentsJson.Comments[0].FromUser.Name;
+                    NowTwitCastingComment = LastTwitCastingName + " " + NowTwitCastingComment;
+                }
+                NowTwitCastingComment = LastTwitCastingName + ":" + NowTwitCastingComment;
+
+                if (string.IsNullOrEmpty(NowTwitCastingComment))
+                {
+                    return;
+                }
+
+                DateTime lastDt = DateTime.Now;
+                DateTime newDt = DateTime.Now;
+                CommentText CommentObj = new CommentText(NowTwitCastingComment)
+                {
+                    LastCommentTime = lastDt,
+                    NowCommentTime = newDt
+                };
+
+                //リンクの場合
+                if (CommentObj.IsLink)
+                {
+                    CommentObj.Comment = "リンクが張られました。";
+                    CommentObj.Lang = 0;
+                    if (File.Exists(App.Default.linkWaveFilePath))
+                    {
+                        SoundPlayer player = new SoundPlayer(App.Default.linkWaveFilePath);
+                        //非同期再生する
+                        player.Play();
+                        LastTwitCastingComment = NowTwitCastingComment;
+                        return;
+                    }
+                }
+                //空行でない & 連続同一コメントでないこと。
+                if (CommentObj.IsBlank == false && LastTwitCastingComment != NowTwitCastingComment)
+                {
+                    //音声用の別処理をぶっ込む。
+                    SpeechSynthe(CommentObj);
+                }
+
+                LastTwitCastingComment = NowTwitCastingComment;
+
+                await Task.Delay(1100);
             }
         }
 
@@ -519,6 +562,28 @@ namespace SyncRoomChatTool
                 match = Regex.Match(newComment, "https?://");
                 IsLink = (match.Success);
 
+                //絵文字っぽいのが入っているかどうかのチェック。半角スペースに置換
+                var newCommentChar = newComment.ToCharArray();
+                for (int i = 0; i < newCommentChar.Length; i++)
+                {
+                    switch (char.GetUnicodeCategory(newCommentChar[i]))
+                    {
+                        case System.Globalization.UnicodeCategory.Surrogate:
+                            newCommentChar[i] = Convert.ToChar(" ");
+                            break;
+                        case System.Globalization.UnicodeCategory.OtherSymbol:
+                            newCommentChar[i] = Convert.ToChar(" ");
+                            break;
+                        case System.Globalization.UnicodeCategory.PrivateUse:
+                            newCommentChar[i] = Convert.ToChar(" ");
+                            break;
+                    }
+                }
+                newComment = new string(newCommentChar);
+#if debug
+                Debug.Print(newComment);
+#endif
+
                 //英数のみかのチェックというか、指定のワードが入ってるかどうか（主に日本語）
                 match = Regex.Match(newComment, "[ぁ-んァ-ヶｱ-ﾝﾞﾟ一-龠！-／：-＠［-｀｛-～、-〜”’・]");
                 if (match.Success)
@@ -547,6 +612,18 @@ namespace SyncRoomChatTool
                 {
                     //改行コピペマンに対しては、ユーザ周りの処理をしなくていいんじゃないかなと。コマンド系の処理も。
                     return;
+                }
+
+                //行頭が＠の場合。返信の宛先と判断し除去
+                match = Regex.Match(Comment, @"[@]");
+                if (match.Success)
+                {
+                    //
+                    match = Regex.Match(Comment, @"[' ']");
+                    if (match.Success)
+                    {
+                        Comment = Comment.Substring(match.Index);
+                    }
                 }
 
                 //ランダム音声割り当て用。ここ、コメントしたら全員デフォでしゃべる。
@@ -878,11 +955,6 @@ namespace SyncRoomChatTool
         {
             App.Default.useTwitcasting = MenuEnableTwitcasting.Checked;
             App.Default.Save();
-        }
-
-        private void MenuTwitcasting_Click(object sender, EventArgs e)
-        {
-
         }
     }
 }
