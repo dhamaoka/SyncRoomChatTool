@@ -48,6 +48,7 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.fontDialog1 = new System.Windows.Forms.FontDialog();
+            this.toolStripStatusLabel3 = new System.Windows.Forms.ToolStripStatusLabel();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -151,14 +152,14 @@
             // 
             this.MenuEnableTwitcasting.CheckOnClick = true;
             this.MenuEnableTwitcasting.Name = "MenuEnableTwitcasting";
-            this.MenuEnableTwitcasting.Size = new System.Drawing.Size(197, 26);
+            this.MenuEnableTwitcasting.Size = new System.Drawing.Size(224, 26);
             this.MenuEnableTwitcasting.Text = "連携する(&R)";
             this.MenuEnableTwitcasting.Click += new System.EventHandler(this.MenuEnableTwitcasting_Click);
             // 
             // MenuSettingTwitcasting
             // 
             this.MenuSettingTwitcasting.Name = "MenuSettingTwitcasting";
-            this.MenuSettingTwitcasting.Size = new System.Drawing.Size(197, 26);
+            this.MenuSettingTwitcasting.Size = new System.Drawing.Size(224, 26);
             this.MenuSettingTwitcasting.Text = "ツイキャス設定(&O)";
             this.MenuSettingTwitcasting.Click += new System.EventHandler(this.MenuSettingTwitcasting_Click);
             // 
@@ -176,22 +177,22 @@
             this.statusStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1,
-            this.toolStripStatusLabel2});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 560);
+            this.toolStripStatusLabel2,
+            this.toolStripStatusLabel3});
+            this.statusStrip1.Location = new System.Drawing.Point(0, 553);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(940, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(940, 29);
             this.statusStrip1.TabIndex = 1;
-            this.statusStrip1.Text = "statusStrip1";
             // 
             // toolStripStatusLabel1
             // 
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(0, 16);
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(0, 23);
             // 
             // toolStripStatusLabel2
             // 
             this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            this.toolStripStatusLabel2.Size = new System.Drawing.Size(0, 16);
+            this.toolStripStatusLabel2.Size = new System.Drawing.Size(0, 23);
             // 
             // panel1
             // 
@@ -201,7 +202,7 @@
             this.panel1.Margin = new System.Windows.Forms.Padding(2);
             this.panel1.Name = "panel1";
             this.panel1.Padding = new System.Windows.Forms.Padding(8);
-            this.panel1.Size = new System.Drawing.Size(940, 529);
+            this.panel1.Size = new System.Drawing.Size(940, 522);
             this.panel1.TabIndex = 3;
             // 
             // richTextBox1
@@ -216,11 +217,17 @@
             this.richTextBox1.Name = "richTextBox1";
             this.richTextBox1.ReadOnly = true;
             this.richTextBox1.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.richTextBox1.Size = new System.Drawing.Size(924, 513);
+            this.richTextBox1.Size = new System.Drawing.Size(924, 506);
             this.richTextBox1.TabIndex = 3;
             this.richTextBox1.Text = resources.GetString("richTextBox1.Text");
             this.richTextBox1.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.RichTextBox1_LinkClicked);
             this.richTextBox1.TextChanged += new System.EventHandler(this.RichTextBox1_TextChanged);
+            // 
+            // toolStripStatusLabel3
+            // 
+            this.toolStripStatusLabel3.Name = "toolStripStatusLabel3";
+            this.toolStripStatusLabel3.Size = new System.Drawing.Size(171, 23);
+            this.toolStripStatusLabel3.Text = "toolStripStatusLabel3";
             // 
             // Form1
             // 
@@ -266,6 +273,7 @@
         private System.Windows.Forms.ToolStripMenuItem MenuTwitcasting;
         private System.Windows.Forms.ToolStripMenuItem MenuEnableTwitcasting;
         private System.Windows.Forms.ToolStripMenuItem MenuSettingTwitcasting;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel3;
     }
 }
 

@@ -11,7 +11,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Automation;
 using System.Windows.Forms;
+using System.Xml.Linq;
 using Newtonsoft.Json;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace SyncRoomChatTool
 {
@@ -23,12 +25,11 @@ namespace SyncRoomChatTool
             UserName = 2
         }
 
-        private static readonly int commentLimit = (int)App.Default.cutLength;
         private static string LastTwitCastingComment = "";
         private static string NowTwitCastingComment = "";
+        private static int commentCounter = 0;
 
-        private static bool isAlive = false;
-        private static string lastMovieId = "";
+        private static User TwiCasUser = new User();
 
         public Form1()
         {
@@ -48,7 +49,7 @@ namespace SyncRoomChatTool
             [JsonProperty("id")]
             public string Id { get; set; }
             [JsonProperty("screen_id")]
-            public string Screen_id { get; set; }
+            public string ScreenId { get; set; }
             [JsonProperty("name")]
             public string Name { get; set; }
             [JsonProperty("image")]
@@ -58,13 +59,13 @@ namespace SyncRoomChatTool
             [JsonProperty("level")]
             public int Level { get; set; }
             [JsonProperty("last_movie_id")]
-            public string Last_movie_id { get; set; }
+            public string LastMovieId { get; set; }
             [JsonProperty("is_live")]
-            public bool Is_live { get; set; }
-            [JsonProperty("Supporter_count")]
-            public int Supporter_count { get; set; }
+            public bool IsAlive { get; set; }
+            [JsonProperty("SupporterCount")]
+            public int SupporterCount { get; set; }
             [JsonProperty("supporting_count")]
-            public int Supporting_count { get; set; }
+            public int SupportingCount { get; set; }
             [JsonProperty("created")]
             public int Created { get; set; }
         }
@@ -111,6 +112,249 @@ namespace SyncRoomChatTool
             public string UserName { get; set; }
             public bool ChimeFlg { get; set; }
             public bool SpeechFlg { get; set; }
+        }
+
+        private class CommentText
+        {
+            static readonly int[] RandTable = new int[] { 0, 8, 10, 14, 20, 21, 2, 13, 11, 3, 29, 30, 23, 27 };
+            static readonly string BlankLineUserName = "改行コピペ野郎";
+
+            public bool IsBlank;
+            public bool IsLink;
+            public bool ChimeFlg = true;
+            public bool SpeechFlg = true;
+            public int Lang;
+            public int StyleId = 2;
+            public string UserName { get; set; }
+            public string Comment { get; set; }
+            public DateTime LastCommentTime;
+            public DateTime NowCommentTime;
+            public bool CanSpeech;
+
+            public CommentText(string newComment, string lastComment, bool appCanSpeech)
+            {
+                if (appCanSpeech == false)
+                {
+                    CanSpeech = false;
+                    return;
+                }
+
+                //末尾がコロンかどうか。空行チェック。
+                IsBlank = (newComment.Substring(newComment.Length - 1, 1) == ":");
+                if (IsBlank)
+                {
+                    CanSpeech = false;
+                    return;
+                }
+
+                //リンクかどうかのチェック
+                Match match;
+                match = Regex.Match(newComment, "https?://");
+                IsLink = (match.Success);
+                if (IsLink)
+                {
+                    Comment = "リンクが張られました。";
+                    Lang = 0;
+                    if (File.Exists(App.Default.linkWaveFilePath))
+                    {
+                        SoundPlayer player = new SoundPlayer(App.Default.linkWaveFilePath);
+                        //非同期再生する
+                        player.Play();
+                    }
+                    else
+                    {
+                        SpeechSynthe(this);
+                    }
+                    lastComment = newComment;
+                    CanSpeech = false;
+                    return;
+                }
+
+                //絵文字っぽいのが入っているかどうかのチェック。半角スペースに置換
+                var newCommentChar = newComment.ToCharArray();
+                for (int i = 0; i < newCommentChar.Length; i++)
+                {
+                    switch (char.GetUnicodeCategory(newCommentChar[i]))
+                    {
+                        case System.Globalization.UnicodeCategory.Surrogate:
+                            newCommentChar[i] = Convert.ToChar(" ");
+                            break;
+                        case System.Globalization.UnicodeCategory.OtherSymbol:
+                            newCommentChar[i] = Convert.ToChar(" ");
+                            break;
+                        case System.Globalization.UnicodeCategory.PrivateUse:
+                            newCommentChar[i] = Convert.ToChar(" ");
+                            break;
+                    }
+                }
+                newComment = new string(newCommentChar);
+                newComment.Trim();
+
+                //ωのチェック。これうざいので。
+                match = Regex.Match(newComment, @"[ω]");
+                if (match.Success)
+                {
+                    newComment.Replace("ω", "");
+                }
+
+                if (string.IsNullOrEmpty(newComment)) {
+                    return;
+                }
+
+                //英数のみかのチェックというか、指定のワードが入ってるかどうか（主に日本語）
+                match = Regex.Match(newComment, "[ぁ-んァ-ヶｱ-ﾝﾞﾟ一-龠！-／：-＠［-｀｛-～、-〜”’・]");
+                if (match.Success)
+                {
+                    Lang = 0;
+                }
+                else
+                {
+                    Lang = 1;
+                }
+
+                //ユーザ名の取得と、コロンを除いたコメント部分の取得
+                string[] ary = newComment.Split(new string[] { ":" }, StringSplitOptions.None);
+                if (ary.Length < 2)
+                {
+                    UserName = BlankLineUserName;
+                    Comment = newComment;
+                }
+                else
+                {
+                    UserName = ary[ary.Length - (int)CommentDivider.UserName];
+                    Comment = ary[ary.Length - (int)CommentDivider.Comment];
+                }
+
+                UserName.Trim();
+                if (UserName == BlankLineUserName)
+                {
+                    //改行コピペマンに対しては、ユーザ周りの処理をしなくていいんじゃないかなと。コマンド系の処理も。
+                    return;
+                }
+
+
+                //ランダム音声割り当て用。ここ、コメントしたら全員デフォでしゃべる。
+                Random rnd = new Random();
+                StyleId = rnd.Next(RandTable.Length);
+
+                bool existsFlg = UserTable.Exists(x => x.UserName == UserName);
+
+                if (existsFlg)
+                {
+                    //UserTableから、StyleIdその他の取り出し。
+                    foreach (var item in UserTable.Where(x => x.UserName == UserName))
+                    {
+                        StyleId = item.StyleId;
+                        ChimeFlg = item.ChimeFlg;
+                        SpeechFlg = item.SpeechFlg;
+                        break;
+                    }
+                }
+                else
+                {
+                    UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, SpeechFlg);
+                }
+
+                //行頭のコマンド有無のチェック。スタイル指定。
+                match = Regex.Match(Comment, @"^\/\d{1,2}");
+                if (match.Success)
+                {
+                    Comment = Comment.Replace(match.ToString(), "");
+                    //[数値]な形式の数値ではある。桁指定したので、[0]～[99]まで。
+                    match = Regex.Match(match.ToString(), @"\d{1,2}");
+                    if (match.Success)
+                    {
+                        //数値は取れたので範囲チェック。StyleIdの一覧と比較。
+                        if (StyleDef.Exists(x => x.StyleId == int.Parse(match.ToString())))
+                        {
+                            StyleId = int.Parse(match.ToString());
+
+                            //[]で指定された数値が、スタイル一覧と合致した場合は、UserTableになければ追加、あれば更新。
+                            UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, SpeechFlg);
+                        }
+                    }
+                }
+
+                //行頭コマンドチェック。/s はスピーチのトグル
+                match = Regex.Match(Comment, @"^/s", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    Comment = Comment.Replace(match.ToString(), "");
+                    UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, !SpeechFlg);
+                }
+
+                //行頭コマンドチェック。/c はチャイムのトグル
+                match = Regex.Match(Comment, @"^/c", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    Comment = Comment.Replace(match.ToString(), "");
+                    UpdateUserOption(existsFlg, UserName, StyleId, !ChimeFlg, SpeechFlg);
+                }
+
+                //UserTableから、StyleIdその他の取り出し。
+                foreach (var item in UserTable.Where(x => x.UserName == UserName))
+                {
+                    StyleId = item.StyleId;
+                    ChimeFlg = item.ChimeFlg;
+                    SpeechFlg = item.SpeechFlg;
+                    break;
+                }
+
+                //8888対応
+                match = Regex.Match(Comment, @"(８|8){2,}", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    Comment = Comment.Replace(match.ToString(), "、パチパチパチ");
+                    Lang = 0;
+                }
+
+                //8888対応
+                match = Regex.Match(Comment, @"(８|8){1,}", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    Comment = Comment.Replace(match.ToString(), "、パチ");
+                    Lang = 0;
+                }
+
+                //ｗｗｗ対応
+                match = Regex.Match(Comment, @"(ｗ|w){2,}", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    Comment = Comment.Replace(match.ToString(), "、ふふっ");
+                    Lang = 0;
+                }
+
+                //行末のｗｗｗ対応
+                match = Regex.Match(Comment, @"(ｗ|w){1,}$", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    Comment = Comment.Replace(match.ToString(), "、ふふっ");
+                    Lang = 0;
+                }
+
+                //文字数制限
+                if (Comment.Length > (int)App.Default.cutLength)
+                {
+                    string[] cutText = { "、以下略。", ", Omitted below" };
+                    Comment = Comment.Substring(0, (int)(App.Default.cutLength - 1));
+                    Comment += cutText[Lang];
+                }
+
+                //前回コメント＝空＝初回起動時
+                if (string.IsNullOrEmpty(lastComment))
+                {
+                    CanSpeech = false;
+                    return;
+                }
+
+                //前回コメントとの比較
+                if (lastComment == newComment)
+                {
+                    CanSpeech = false;
+                    return;
+                }
+                CanSpeech = true;
+            }
         }
 
         private static UIAutomationLib ui = new UIAutomationLib();
@@ -207,9 +451,9 @@ namespace SyncRoomChatTool
                 if (ret != null)
                 {
                     //Jsonのデシリアライズ。StyleIdの一覧を作る。
-                    List<SpeakerFromAPI> myDeserializedClass = JsonConvert.DeserializeObject<List<SpeakerFromAPI>>(ret.ToString());
+                    List<SpeakerFromAPI> VoiceBoxSpeakers = JsonConvert.DeserializeObject<List<SpeakerFromAPI>>(ret.ToString());
 
-                    foreach (SpeakerFromAPI speaker in myDeserializedClass)
+                    foreach (SpeakerFromAPI speaker in VoiceBoxSpeakers)
                     {
                         foreach (StyleFromAPI st in speaker.styles)
                         {
@@ -223,8 +467,7 @@ namespace SyncRoomChatTool
                 }
             }
 
-            _ = UserInfo();
-            _ = CommentInfo();
+            ShowUserInfo();
             _ = CheckProcess("SYNCROOM", this.statusStrip1, this.richTextBox1);
         }
 
@@ -236,12 +479,36 @@ namespace SyncRoomChatTool
 
             //初期化。前回取得のログ全部と、最後のコメントの保管場所
             string oldLog = "";
-            string lastComment = "";
+            string oldComment = "";
             DateTime lastDt = DateTime.Now;
             DateTime newDt;
+            int counter = 0;
 
             while (true)
             {
+                if (App.Default.useTwitcasting)
+                {
+                    // だせぇ。最低500ミリ秒だから、最短でも1分に1回はユーザー情報取りに行く仕掛け。だせぇ。
+                    counter++;
+                    if (counter > 960)
+                    {
+                        counter = 0;
+                    }
+                    if ((counter % 120) == 0)
+                    {
+                        UserInfo();
+                    }
+
+                    // だせぇ。最低500ミリ秒だから、最短でも1.5秒に1回はコメント情報取りに行く仕掛け。だせぇ。
+                    if ((counter % 3) == 0)
+                    {
+                        CommentInfo();
+#if DEBUG
+                        Debug.WriteLine(DateTime.Now.ToString());
+#endif
+                    }
+                }
+
                 TargetProcess targetProc = new TargetProcess(ProcessName);
 
                 string toolMessage;
@@ -251,8 +518,6 @@ namespace SyncRoomChatTool
                     toolMessage = "は起動されています。";
                     try
                     {
-                        //AutomationElement synroomElement = ui.GetMainFrameElement(targetProc.Proc);
-
                         IntPtr chatwHnd = ui.FindHWndByCaptionAndProcessID("チャット", targetProc.Id);
 
                         if (chatwHnd != IntPtr.Zero)
@@ -283,54 +548,34 @@ namespace SyncRoomChatTool
 
                                     newComment = ary[ary.Count() - 1];
 
-                                    CommentText CommentObj = new CommentText(newComment)
+                                    CommentText CommentObj = new CommentText(newComment, oldComment, App.Default.canSpeech)
                                     {
                                         LastCommentTime = lastDt,
                                         NowCommentTime = newDt
                                     };
 
-                                    if (App.Default.canSpeech)
+                                    if (CommentObj.CanSpeech)
                                     {
-                                        //リンクの場合
-                                        if (CommentObj.IsLink)
-                                        {
-                                            CommentObj.Comment = "リンクが張られました。";
-                                            CommentObj.Lang = 0;
-                                            if (File.Exists(App.Default.linkWaveFilePath))
-                                            {
-                                                SoundPlayer player = new SoundPlayer(App.Default.linkWaveFilePath);
-                                                //非同期再生する
-                                                player.Play();
-                                                lastComment = newComment;
-                                                continue;
-                                            }
-                                        }
-
-                                        //空行でない & 連続同一コメントでないこと。
-                                        if (CommentObj.IsBlank == false && lastComment != newComment)
-                                        {
-                                            //音声用の別処理をぶっ込む。
-                                            SpeechSynthe(CommentObj);
-                                        }
-                                        else
-                                        {
-                                            // テストモード（音声ファイルは出力しない）で空打ち（エンジンには合成させてる）すると
-                                            // 多少は速くなるかなぁと思ったが、そんなに変わらん気もする。
-                                            // ここが有効だと、監視中ずーっとエンジン動かしてることにはなるんだよねぇ。
-                                            // 一回リリースしてみるか
-                                            
-                                            CommentObj = new CommentText("空打ち")
-                                            {
-                                                LastCommentTime = DateTime.Now,
-                                                NowCommentTime = DateTime.Now
-                                            };
-                                            SpeechSynthe(CommentObj, true);
-                                            
-                                        }
+                                        //音声用の別処理をぶっ込む。
+                                        SpeechSynthe(CommentObj);
                                     }
 
-                                    lastComment = newComment;
+                                    oldComment = newComment;
                                     lastDt = newDt;
+                                }
+                                else
+                                {
+                                    // テストモード（音声ファイルは出力しない）で空打ち（エンジンには合成させてる）すると
+                                    // 多少は速くなるかなぁと思ったが、そんなに変わらん気もする。
+                                    // ここが有効だと、監視中ずーっとエンジン動かしてることにはなるんだよねぇ。
+                                    // 一回リリースしてみるか
+
+                                    CommentText CommentObj = new CommentText("あ","ダミーオールド",App.Default.canSpeech)
+                                    {
+                                        LastCommentTime = DateTime.Now,
+                                        NowCommentTime = DateTime.Now
+                                    };
+                                    SpeechSynthe(CommentObj, true);
                                 }
                             }
                         }
@@ -352,13 +597,14 @@ namespace SyncRoomChatTool
                         synth.SelectVoice("Microsoft Haruka Desktop");
                         synth.SpeakAsync(errMsg);
                         await Task.Delay(3000);
+                        Application.Exit();
                     }
                 }
                 else
                 {
                     toolMessage = "は起動されていません。";
                     oldLog = "";
-                    lastComment = "";
+                    oldComment = "";
                 }
                 ststp.Items[0].Text = ProcessName + toolMessage;
 
@@ -366,374 +612,176 @@ namespace SyncRoomChatTool
             }
         }
 
-        static async Task UserInfo()
+        /// <summary>
+        /// ツイキャスユーザ情報取得。ロード時とツイキャス設定画面から帰ってきた時、最短1分ごとに実行。
+        /// </summary>
+        static void UserInfo()
         {
-            while (true)
+
+            if (App.Default.useTwitcasting == false)
             {
-
-                if (App.Default.useTwitcasting == false)
-                {
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(App.Default.AccessToken))
-                {
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(App.Default.twitcastUserName))
-                {
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(App.Default.twitCastingBaseAddress))
-                {
-                    return;
-                }
-
-                string baseUrl = App.Default.twitCastingBaseAddress;
-
-                if (baseUrl.Substring(baseUrl.Length - 1, 1) != "/")
-                {
-                    baseUrl += "/";
-                }
-
-                // User情報の取得
-                string url = baseUrl + $"users/{App.Default.twitcastUserName}";
-                var client = new ServiceHttpClient(url, ServiceHttpClient.RequestType.userInfo);
-                var ret = client.Get();
-                TwitCastingUserInfo userJson = null;
-
-                if (ret != null)
-                {
-                    //Jsonのデシリアライズ。LastMovieIdの取得
-                    userJson = JsonConvert.DeserializeObject<TwitCastingUserInfo>(ret.ToString());
-                    lastMovieId = userJson.UserInfo.Last_movie_id;
-                }
-
-                isAlive = false;
-                if (userJson != null)
-                {
-                    if (!string.IsNullOrEmpty(lastMovieId))
-                    {
-                        isAlive = userJson.UserInfo.Is_live;
-                    }
-                }
-
-                await Task.Delay(60000);
+                return;
             }
+
+            if (string.IsNullOrEmpty(App.Default.AccessToken))
+            {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(App.Default.twitcastUserName))
+            {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(App.Default.twitCastingBaseAddress))
+            {
+                return;
+            }
+
+            string baseUrl = App.Default.twitCastingBaseAddress;
+
+            if (baseUrl.Substring(baseUrl.Length - 1, 1) != "/")
+            {
+                baseUrl += "/";
+            }
+
+            // User情報の取得
+            string url = baseUrl + $"users/{App.Default.twitcastUserName}";
+            var client = new ServiceHttpClient(url, ServiceHttpClient.RequestType.userInfo);
+            var ret = client.Get();
+            TwitCastingUserInfo userJson = null;
+
+            if (ret != null)
+            {
+                //Jsonのデシリアライズ。LastMovieIdの取得
+                userJson = JsonConvert.DeserializeObject<TwitCastingUserInfo>(ret.ToString());
+            }
+            TwiCasUser = null;
+            if (userJson != null)
+            {
+                TwiCasUser = userJson.UserInfo;
+            }
+
+            return;
         }
 
         /// <summary>
         /// APIをどついてツイキャスのコメントをチェックする。
         /// </summary>
-        static async Task CommentInfo()
-        {
-            while(true)
+        static void CommentInfo()
+        {           
+            if (App.Default.useTwitcasting == false)
             {
-                if (App.Default.useTwitcasting == false)
-                {
-                    return;
-                }
+                return;
+            }
 
-                if (string.IsNullOrEmpty(App.Default.AccessToken))
-                {
-                    return;
-                }
+            if (string.IsNullOrEmpty(App.Default.AccessToken))
+            {
+                return;
+            }
 
-                if (string.IsNullOrEmpty(App.Default.twitcastUserName))
-                {
-                    return;
-                }
+            if (string.IsNullOrEmpty(App.Default.twitcastUserName))
+            {
+                return;
+            }
 
-                if (string.IsNullOrEmpty(App.Default.twitCastingBaseAddress))
-                {
-                    return;
-                }
+            if (string.IsNullOrEmpty(App.Default.twitCastingBaseAddress))
+            {
+                return;
+            }
 
-                string baseUrl = App.Default.twitCastingBaseAddress;
+            string baseUrl = App.Default.twitCastingBaseAddress;
 
-                if (baseUrl.Substring(baseUrl.Length - 1, 1) != "/")
-                {
-                    baseUrl += "/";
-                }
+            if (baseUrl.Substring(baseUrl.Length - 1, 1) != "/")
+            {
+                baseUrl += "/";
+            }
 
-                if (string.IsNullOrEmpty(lastMovieId))
-                {
-                    return;
-                }
+            if (string.IsNullOrEmpty(TwiCasUser.LastMovieId))
+            {
+                return;
+            }
 
-                // Movieが生きてるか死んでるか。
+            // Movieが生きてるか死んでるか。
 #if DEBUG == false
-            if (isAlive == false)
+            if (TwiCasUser.IsAlive == false)
             {
                 return;
             }
 #endif
-                // 最新配信の取得
-                string url = baseUrl + $"movies/{lastMovieId}/comments?&limit=3";
-                var client = new ServiceHttpClient(url, ServiceHttpClient.RequestType.commentInfo);
-                var ret = client.Get();
-                TwitCastingCommentRoot commentsJson = null;
+            // 最新配信の取得
+            string url = baseUrl + $"movies/{TwiCasUser.LastMovieId}/comments?&limit=10";
+            var client = new ServiceHttpClient(url, ServiceHttpClient.RequestType.commentInfo);
+            var ret = client.Get();
+            TwitCastingCommentRoot commentsJson = null;
 
-                string LastTwitCastingName = "";
-                if (ret != null)
-                {
-                    //Jsonのデシリアライズ。LastMovieIdの取得
-                    commentsJson = JsonConvert.DeserializeObject<TwitCastingCommentRoot>(ret.ToString());
-                    if (commentsJson.Comments.Count < 1)
-                    {
-                        return;
-                    }
-                    NowTwitCastingComment = commentsJson.Comments[0].Message;
-                }
-
-                if (App.Default.readName)
-                {
-                    LastTwitCastingName = commentsJson.Comments[0].FromUser.Name;
-                    NowTwitCastingComment = LastTwitCastingName + " " + NowTwitCastingComment;
-                }
-                NowTwitCastingComment = LastTwitCastingName + ":" + NowTwitCastingComment;
-
-                if (string.IsNullOrEmpty(NowTwitCastingComment))
-                {
-                    return;
-                }
-
-                DateTime lastDt = DateTime.Now;
-                DateTime newDt = DateTime.Now;
-                CommentText CommentObj = new CommentText(NowTwitCastingComment)
-                {
-                    LastCommentTime = lastDt,
-                    NowCommentTime = newDt
-                };
-
-                //リンクの場合
-                if (CommentObj.IsLink)
-                {
-                    CommentObj.Comment = "リンクが張られました。";
-                    CommentObj.Lang = 0;
-                    if (File.Exists(App.Default.linkWaveFilePath))
-                    {
-                        SoundPlayer player = new SoundPlayer(App.Default.linkWaveFilePath);
-                        //非同期再生する
-                        player.Play();
-                        LastTwitCastingComment = NowTwitCastingComment;
-                        return;
-                    }
-                }
-                //空行でない & 連続同一コメントでないこと。
-                if (CommentObj.IsBlank == false && LastTwitCastingComment != NowTwitCastingComment)
-                {
-                    //音声用の別処理をぶっ込む。
-                    SpeechSynthe(CommentObj);
-                }
-
-                LastTwitCastingComment = NowTwitCastingComment;
-
-                await Task.Delay(1100);
-            }
-        }
-
-        private class CommentText
-        {
-
-            static readonly int[] randTable = new int[] { 0, 8, 10, 14, 20, 21, 12, 13, 11, 3, 29, 30, 23, 27 };
-            static readonly string blankLineUserName = "改行コピペ野郎";
-
-            public bool IsBlank;
-            public bool IsLink;
-            public bool ChimeFlg = true;
-            public bool SpeechFlg = true;
-            public int Lang;
-            public int StyleId = 2;
-            public string UserName { get; set; }
-            public string Comment { get; set; }
-            public DateTime LastCommentTime;
-            public DateTime NowCommentTime;
-
-            public CommentText(string newComment)
+            string LastTwitCastingName = "";
+            if (ret != null)
             {
-                //末尾がコロンかどうか。空行チェック。
-                IsBlank = (newComment.Substring(newComment.Length - 1, 1) == ":");
-
-                //リンクかどうかのチェック
-                Match match;
-                match = Regex.Match(newComment, "https?://");
-                IsLink = (match.Success);
-
-                //絵文字っぽいのが入っているかどうかのチェック。半角スペースに置換
-                var newCommentChar = newComment.ToCharArray();
-                for (int i = 0; i < newCommentChar.Length; i++)
+                //Jsonのデシリアライズ。LastMovieIdの取得
+                commentsJson = JsonConvert.DeserializeObject<TwitCastingCommentRoot>(ret.ToString());
+                if (commentsJson.Comments.Count < 1)
                 {
-                    switch (char.GetUnicodeCategory(newCommentChar[i]))
-                    {
-                        case System.Globalization.UnicodeCategory.Surrogate:
-                            newCommentChar[i] = Convert.ToChar(" ");
-                            break;
-                        case System.Globalization.UnicodeCategory.OtherSymbol:
-                            newCommentChar[i] = Convert.ToChar(" ");
-                            break;
-                        case System.Globalization.UnicodeCategory.PrivateUse:
-                            newCommentChar[i] = Convert.ToChar(" ");
-                            break;
-                    }
-                }
-                newComment = new string(newCommentChar);
-#if debug
-                Debug.Print(newComment);
-#endif
-
-                //英数のみかのチェックというか、指定のワードが入ってるかどうか（主に日本語）
-                match = Regex.Match(newComment, "[ぁ-んァ-ヶｱ-ﾝﾞﾟ一-龠！-／：-＠［-｀｛-～、-〜”’・]");
-                if (match.Success)
-                {
-                    Lang = 0;
-                }
-                else
-                {
-                    Lang = 1;
-                }
-
-                //ユーザ名の取得と、コロンを除いたコメント部分の取得
-                string[] ary = newComment.Split(new string[] { ":" }, StringSplitOptions.None);
-                if (ary.Length < 2)
-                {
-                    UserName = blankLineUserName;
-                    Comment = newComment;
-                }
-                else
-                {
-                    UserName = ary[ary.Length - (int)CommentDivider.UserName];
-                    Comment = ary[ary.Length - (int)CommentDivider.Comment];
-                }
-
-                if (UserName == blankLineUserName)
-                {
-                    //改行コピペマンに対しては、ユーザ周りの処理をしなくていいんじゃないかなと。コマンド系の処理も。
                     return;
                 }
+                NowTwitCastingComment = commentsJson.Comments[0].Message;
 
                 //行頭が＠の場合。返信の宛先と判断し除去
-                match = Regex.Match(Comment, @"[@]");
+                Match match = Regex.Match(NowTwitCastingComment, @"[^@]");
                 if (match.Success)
                 {
                     //
-                    match = Regex.Match(Comment, @"[' ']");
+                    match = Regex.Match(NowTwitCastingComment, @"[' ']");
                     if (match.Success)
                     {
-                        Comment = Comment.Substring(match.Index);
+                        NowTwitCastingComment = NowTwitCastingComment.Substring(match.Index);
                     }
                 }
-
-                //ランダム音声割り当て用。ここ、コメントしたら全員デフォでしゃべる。
-                Random rnd = new Random();
-                StyleId = rnd.Next(randTable.Length);
-
-                bool existsFlg = UserTable.Exists(x => x.UserName == UserName);
-
-                if (existsFlg)
-                {
-                    //UserTableから、StyleIdその他の取り出し。
-                    foreach (var item in UserTable.Where(x => x.UserName == UserName))
-                    {
-                        StyleId = item.StyleId;
-                        ChimeFlg = item.ChimeFlg;
-                        SpeechFlg = item.SpeechFlg;
-                        break;
-                    }
-                }
-                else
-                {
-                    UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, SpeechFlg);
-                }
-
-                //行頭のコマンド有無のチェック。スタイル指定。
-                match = Regex.Match(Comment, @"^\/\d{1,2}");
-                if (match.Success)
-                {
-                    Comment = Comment.Replace(match.ToString(), "");
-                    //[数値]な形式の数値ではある。桁指定したので、[0]～[99]まで。
-                    match = Regex.Match(match.ToString(), @"\d{1,2}");
-                    if (match.Success)
-                    {
-                        //数値は取れたので範囲チェック。StyleIdの一覧と比較。
-                        if (StyleDef.Exists(x => x.StyleId == int.Parse(match.ToString())))
-                        {
-                            StyleId = int.Parse(match.ToString());
-
-                            //[]で指定された数値が、スタイル一覧と合致した場合は、UserTableになければ追加、あれば更新。
-                            UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, SpeechFlg);
-                        }
-                    }
-                }
-
-                //行頭コマンドチェック。/s はスピーチのトグル
-                match = Regex.Match(Comment, @"^/s", RegexOptions.IgnoreCase);
-                if (match.Success)
-                {
-                    Comment = Comment.Replace(match.ToString(), "");
-                    UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, !SpeechFlg);
-                }
-
-                //行頭コマンドチェック。/c はスピーチのトグル
-                match = Regex.Match(Comment, @"^/c", RegexOptions.IgnoreCase);
-                if (match.Success)
-                {
-                    Comment = Comment.Replace(match.ToString(), "");
-                    UpdateUserOption(existsFlg, UserName, StyleId, !ChimeFlg, SpeechFlg);
-                }
-
-                //UserTableから、StyleIdその他の取り出し。
-                foreach (var item in UserTable.Where(x => x.UserName == UserName))
-                {
-                    StyleId = item.StyleId;
-                    ChimeFlg = item.ChimeFlg;
-                    SpeechFlg = item.SpeechFlg;
-                    break;
-                }
-
-                //8888対応
-                match = Regex.Match(Comment, @"(８|8){2,}", RegexOptions.IgnoreCase);
-                if (match.Success)
-                {
-                    Comment = Comment.Replace(match.ToString(), "、パチパチパチ");
-                    Lang = 0;
-                }
-
-                //8888対応
-                match = Regex.Match(Comment, @"(８|8){1,}", RegexOptions.IgnoreCase);
-                if (match.Success)
-                {
-                    Comment = Comment.Replace(match.ToString(), "、パチ");
-                    Lang = 0;
-                }
-
-                //ｗｗｗ対応
-                match = Regex.Match(Comment, @"(ｗ|w){2,}", RegexOptions.IgnoreCase);
-                if (match.Success)
-                {
-                    Comment = Comment.Replace(match.ToString(), "、ふふっ");
-                    Lang = 0;
-                }
-
-                //行末のｗｗｗ対応
-                match = Regex.Match(Comment, @"(ｗ|w){1,}$", RegexOptions.IgnoreCase);
-                if (match.Success)
-                {
-                    Comment = Comment.Replace(match.ToString(), "、ふふっ");
-                    Lang = 0;
-                }
-
-                //文字数制限
-                if (Comment.Length > commentLimit)
-                {
-                    string[] cutText = { "、以下略。", ", Omitted below" };
-                    Comment = Comment.Substring(0, commentLimit - 1);
-                    Comment += cutText[Lang];
-                }
-
             }
+            else
+            {
+                return;
+            }
+
+            if (commentsJson.AllCount == commentCounter)
+            {
+                return;
+            }
+
+            if (App.Default.readName)
+            {
+                LastTwitCastingName = commentsJson.Comments[0].FromUser.Name;
+                NowTwitCastingComment = LastTwitCastingName + " " + NowTwitCastingComment;
+            }
+            else
+            {
+                LastTwitCastingName = "ツイキャスユーザ";
+            }
+
+            if (string.IsNullOrEmpty(NowTwitCastingComment))
+            {
+                return;
+            }
+
+            NowTwitCastingComment = LastTwitCastingName + ":" + NowTwitCastingComment;
+
+            DateTime lastDt = DateTime.Now;
+            DateTime newDt = DateTime.Now;
+            CommentText CommentObj = new CommentText(NowTwitCastingComment, LastTwitCastingComment, App.Default.useTwitcasting)
+            {
+                LastCommentTime = lastDt,
+                NowCommentTime = newDt
+            };
+
+            //空行でない & 連続同一コメントでないこと。
+            if (CommentObj.CanSpeech)
+            {
+                //音声用の別処理をぶっ込む。
+                SpeechSynthe(CommentObj);
+            }
+
+            commentCounter = commentsJson.AllCount;
+            LastTwitCastingComment = NowTwitCastingComment;
         }
 
         private static void UpdateUserOption(bool existsFlg, string UserName, int StyleId, bool ChatFlg, bool SpeechFlg)
@@ -792,6 +840,11 @@ namespace SyncRoomChatTool
                 return;
             }
 
+            if (testMode)
+            {
+                return;
+            }
+
             SpeechSynthesizer synth = new SpeechSynthesizer
             {
                 Rate = -1
@@ -806,7 +859,9 @@ namespace SyncRoomChatTool
             {
                 synth.SelectVoice("Microsoft Zira Desktop");
             }
-
+#if DEBUG
+            Debug.WriteLine(commentObj.Comment);
+#endif
             synth.SpeakAsync(commentObj.Comment);
         }
 
@@ -949,12 +1004,37 @@ namespace SyncRoomChatTool
                 App.Default.readName = twitCasting.ReadName;
                 App.Default.Save();
             }
+            ShowUserInfo();
         }
 
         private void MenuEnableTwitcasting_Click(object sender, EventArgs e)
         {
             App.Default.useTwitcasting = MenuEnableTwitcasting.Checked;
+            ShowUserInfo();
             App.Default.Save();
+        }
+
+        private void ShowUserInfo()
+        {
+            toolStripStatusLabel3.Text = "";
+
+            if (App.Default.useTwitcasting)
+            {
+                UserInfo();
+                if (TwiCasUser != null)
+                {
+                    string castingStatus = "未配信";
+                    if (TwiCasUser.IsAlive)
+                    {
+                        castingStatus = "配信中";
+                    }
+                    toolStripStatusLabel3.Text = $"ツイキャスID = {TwiCasUser.ScreenId}（{TwiCasUser.Name}）{castingStatus}";
+                }
+                else
+                {
+                    toolStripStatusLabel3.Text = "ツイキャスユーザ情報の取得に失敗しました。";
+                }
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq.Expressions;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -120,6 +121,14 @@ namespace SyncRoomChatTool
                 // UNDONE: 通信失敗のエラー処理
                 return null;
             }
+            catch (System.AggregateException Aggre)
+            {
+#if DEBUG
+                Debug.WriteLine(Aggre.Message);
+#endif
+                return null; 
+            }
+
 
             if (!resStatusCoode.Equals(HttpStatusCode.OK))
             {
