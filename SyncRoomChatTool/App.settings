@@ -50,5 +50,11 @@
     <Setting Name="twitCastingBaseAddress" Type="System.String" Scope="User">
       <Value Profile="(Default)">https://apiv2.twitcasting.tv/</Value>
     </Setting>
+    <Setting Name="WindowTopMost" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="OpenLink" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

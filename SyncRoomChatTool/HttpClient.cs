@@ -116,7 +116,7 @@ namespace SyncRoomChatTool
 #endif
                 }
             }
-            catch (HttpRequestException e)
+            catch (HttpRequestException)
             {
                 // UNDONE: 通信失敗のエラー処理
                 return null;
@@ -159,9 +159,8 @@ namespace SyncRoomChatTool
             request.Content = content;
 
             string resBodyStr = "";
-            HttpStatusCode resStatusCoode = HttpStatusCode.NotFound;
-
             Task<HttpResponseMessage> response;
+            HttpStatusCode resStatusCoode;
             try
             {
                 switch (reqType)
@@ -200,7 +199,7 @@ namespace SyncRoomChatTool
                 }
                 resStatusCoode = response.Result.StatusCode;
             }
-            catch (HttpRequestException e)
+            catch (HttpRequestException)
             {
                 // UNDONE: 通信失敗のエラー処理
                 return null;

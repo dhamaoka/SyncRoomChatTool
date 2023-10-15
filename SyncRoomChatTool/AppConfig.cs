@@ -12,6 +12,7 @@ namespace SyncRoomChatTool
         public string linkWaveFilePath;
         public string voiceVoxPath;
         public string voiceVoxAddress;
+        public bool windowTopMost;
 
         public AppConfig()
         {
@@ -43,7 +44,7 @@ namespace SyncRoomChatTool
             numWait.Value = App.Default.waitTiming;
             numCut.Value = App.Default.cutLength;
             textBox1.Text = App.Default.linkWaveFilePath;
-            textBox2.Text = App.Default.VoiceVoxPath;
+            textBox2.Text = App.Default.VoiceVoxPath;           
             if (string.IsNullOrEmpty(App.Default.VoiceVoxAddress))
             {
                 textBox3.Text = "http://localhost:50021";
@@ -61,12 +62,13 @@ namespace SyncRoomChatTool
             string appPath = Application.StartupPath;
             string absolutePath = Path.Combine(appPath, "link.wav");
 
-            OpenFileDialog dlg = new OpenFileDialog();
-
-            dlg.FileName = absolutePath;
-            dlg.Title = "リンク専用の音声ファイルを選択してください。";
-            dlg.InitialDirectory = appPath;
-            dlg.Filter = "音声ファイル|*.wav";
+            OpenFileDialog dlg = new OpenFileDialog
+            {
+                FileName = absolutePath,
+                Title = "リンク専用の音声ファイルを選択してください。",
+                InitialDirectory = appPath,
+                Filter = "音声ファイル|*.wav"
+            };
 
             if (dlg.ShowDialog() == DialogResult.OK)
             {
@@ -118,14 +120,15 @@ namespace SyncRoomChatTool
             voiceVoxAddress = textBox3.Text;
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void Button2_Click(object sender, EventArgs e)
         {
-            OpenFileDialog dlg = new OpenFileDialog();
-
-            dlg.FileName = "run.exe";
-            dlg.Title = "VOICEVOXのEngineを指定します。";
-            dlg.InitialDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs\\VOICEVOX");
-            dlg.Filter = "実行ファイル|*.exe";
+            OpenFileDialog dlg = new OpenFileDialog
+            {
+                FileName = "run.exe",
+                Title = "VOICEVOXのEngineを指定します。",
+                InitialDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs\\VOICEVOX"),
+                Filter = "実行ファイル|*.exe"
+            };
 
             if (dlg.ShowDialog() == DialogResult.OK)
             {

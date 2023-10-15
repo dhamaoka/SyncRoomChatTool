@@ -43,7 +43,7 @@
             this.webView21.Size = new System.Drawing.Size(1116, 734);
             this.webView21.TabIndex = 0;
             this.webView21.ZoomFactor = 1D;
-            this.webView21.CoreWebView2InitializationCompleted += new System.EventHandler<Microsoft.Web.WebView2.Core.CoreWebView2InitializationCompletedEventArgs>(this.webView21_CoreWebView2InitializationCompleted);
+            this.webView21.CoreWebView2InitializationCompleted += new System.EventHandler<Microsoft.Web.WebView2.Core.CoreWebView2InitializationCompletedEventArgs>(this.WebView21_CoreWebView2InitializationCompleted);
             // 
             // Help
             // 
@@ -54,6 +54,7 @@
             this.Name = "Help";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "ヘルプページ";
+            this.TopMost = true;
             this.Load += new System.EventHandler(this.Help_Load);
             ((System.ComponentModel.ISupportInitialize)(this.webView21)).EndInit();
             this.ResumeLayout(false);

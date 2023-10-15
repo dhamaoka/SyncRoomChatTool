@@ -22,6 +22,9 @@ namespace SyncRoomChatTool
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         static extern IntPtr SendMessage(IntPtr hWnd, uint msg, int wParam, string lParam);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool PostMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         static extern bool IsWindowVisible(IntPtr hWnd);
@@ -31,6 +34,19 @@ namespace SyncRoomChatTool
 
         const int WM_GETTEXT = 0x000D;
         const int WM_GETTEXTLENGTH = 0x000E;
+        const int WM_KEYDOWN = 0x0100;
+        const int VK_RETURN = 0x0D;
+        const int WM_SYSCOMMAND = 0x0112;
+        const int SC_MINIMIZE = 0xF020;
+
+        public void SendReturn(IntPtr hWnd) {
+            PostMessage(hWnd, WM_KEYDOWN, VK_RETURN, 0);
+        }
+
+        public void SendMinimized(IntPtr hWnd)
+        {
+            PostMessage(hWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+        }
 
         public string GetControlText(IntPtr hWnd)
         {
@@ -94,6 +110,41 @@ namespace SyncRoomChatTool
                 }
             }
             return returnElement;
+        }
+
+        // Buttonエレメントを探して返す。
+        public AutomationElement GetButtonElement(AutomationElement rootElement, string elementName)
+        {
+            AutomationElementCollection allElements = rootElement.FindAll(TreeScope.Element | TreeScope.Descendants, new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button));
+
+            //見つからなかったら、渡されたルートエレメントを返す。
+            AutomationElement returnElement = rootElement;
+
+            foreach (AutomationElement el in allElements)
+            {
+                if (el.Current.Name.Contains(elementName))
+                {
+                    returnElement = el;
+                    break;
+                }
+            }
+            return returnElement;
+        }
+
+        public InvokePattern GetInvokePattern(AutomationElement targetControl)
+        {
+            InvokePattern invokePattern;
+            try
+            {
+                invokePattern = targetControl.GetCurrentPattern(InvokePattern.Pattern) as InvokePattern;
+            }
+            // Object doesn't support the ValuePattern control pattern
+            catch (InvalidOperationException)
+            {
+                return null;
+            }
+
+            return invokePattern;
         }
 
         public ValuePattern GetValuePattern(

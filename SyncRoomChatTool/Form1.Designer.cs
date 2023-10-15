@@ -35,6 +35,9 @@
             this.MenuTool = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuFont = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuOption = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.MenuWindowTopMost = new System.Windows.Forms.ToolStripMenuItem();
+            this.MenuOpenLink = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuSpeech = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuEnebleSpeech = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuUseVoiceVox = new System.Windows.Forms.ToolStripMenuItem();
@@ -45,13 +48,19 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
-            this.fontDialog1 = new System.Windows.Forms.FontDialog();
             this.toolStripStatusLabel3 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel4 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.fontDialog1 = new System.Windows.Forms.FontDialog();
+            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
+            this.button1 = new System.Windows.Forms.Button();
+            this.textBox1 = new System.Windows.Forms.TextBox();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
-            this.panel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
+            this.splitContainer1.Panel1.SuspendLayout();
+            this.splitContainer1.Panel2.SuspendLayout();
+            this.splitContainer1.SuspendLayout();
             this.SuspendLayout();
             // 
             // menuStrip1
@@ -89,7 +98,10 @@
             // 
             this.MenuTool.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.MenuFont,
-            this.MenuOption});
+            this.MenuOption,
+            this.toolStripSeparator1,
+            this.MenuWindowTopMost,
+            this.MenuOpenLink});
             this.MenuTool.Font = new System.Drawing.Font("Yu Gothic UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.MenuTool.Name = "MenuTool";
             this.MenuTool.Size = new System.Drawing.Size(81, 27);
@@ -98,16 +110,37 @@
             // MenuFont
             // 
             this.MenuFont.Name = "MenuFont";
-            this.MenuFont.Size = new System.Drawing.Size(161, 28);
+            this.MenuFont.Size = new System.Drawing.Size(234, 28);
             this.MenuFont.Text = "フォント(&F)";
             this.MenuFont.Click += new System.EventHandler(this.MenuFont_Click);
             // 
             // MenuOption
             // 
             this.MenuOption.Name = "MenuOption";
-            this.MenuOption.Size = new System.Drawing.Size(161, 28);
+            this.MenuOption.Size = new System.Drawing.Size(234, 28);
             this.MenuOption.Text = "設定(&O)";
             this.MenuOption.Click += new System.EventHandler(this.MenuOption_Click);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(231, 6);
+            // 
+            // MenuWindowTopMost
+            // 
+            this.MenuWindowTopMost.CheckOnClick = true;
+            this.MenuWindowTopMost.Name = "MenuWindowTopMost";
+            this.MenuWindowTopMost.Size = new System.Drawing.Size(234, 28);
+            this.MenuWindowTopMost.Text = "最前面固定(&T)";
+            this.MenuWindowTopMost.Click += new System.EventHandler(this.MenuWindowTopMost_Click);
+            // 
+            // MenuOpenLink
+            // 
+            this.MenuOpenLink.CheckOnClick = true;
+            this.MenuOpenLink.Name = "MenuOpenLink";
+            this.MenuOpenLink.Size = new System.Drawing.Size(234, 28);
+            this.MenuOpenLink.Text = "リンク自動オープン(&L)";
+            this.MenuOpenLink.Click += new System.EventHandler(this.MenuOpenLink_Click);
             // 
             // MenuSpeech
             // 
@@ -152,14 +185,14 @@
             // 
             this.MenuEnableTwitcasting.CheckOnClick = true;
             this.MenuEnableTwitcasting.Name = "MenuEnableTwitcasting";
-            this.MenuEnableTwitcasting.Size = new System.Drawing.Size(224, 26);
+            this.MenuEnableTwitcasting.Size = new System.Drawing.Size(197, 26);
             this.MenuEnableTwitcasting.Text = "連携する(&R)";
             this.MenuEnableTwitcasting.Click += new System.EventHandler(this.MenuEnableTwitcasting_Click);
             // 
             // MenuSettingTwitcasting
             // 
             this.MenuSettingTwitcasting.Name = "MenuSettingTwitcasting";
-            this.MenuSettingTwitcasting.Size = new System.Drawing.Size(224, 26);
+            this.MenuSettingTwitcasting.Size = new System.Drawing.Size(197, 26);
             this.MenuSettingTwitcasting.Text = "ツイキャス設定(&O)";
             this.MenuSettingTwitcasting.Click += new System.EventHandler(this.MenuSettingTwitcasting_Click);
             // 
@@ -178,32 +211,55 @@
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1,
             this.toolStripStatusLabel2,
-            this.toolStripStatusLabel3});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 553);
+            this.toolStripStatusLabel3,
+            this.toolStripStatusLabel4});
+            this.statusStrip1.Location = new System.Drawing.Point(0, 560);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(940, 29);
+            this.statusStrip1.Size = new System.Drawing.Size(940, 22);
             this.statusStrip1.TabIndex = 1;
             // 
             // toolStripStatusLabel1
             // 
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(0, 23);
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(0, 16);
             // 
             // toolStripStatusLabel2
             // 
             this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            this.toolStripStatusLabel2.Size = new System.Drawing.Size(0, 23);
+            this.toolStripStatusLabel2.Size = new System.Drawing.Size(0, 16);
             // 
-            // panel1
+            // toolStripStatusLabel3
             // 
-            this.panel1.Controls.Add(this.richTextBox1);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel1.Location = new System.Drawing.Point(0, 31);
-            this.panel1.Margin = new System.Windows.Forms.Padding(2);
-            this.panel1.Name = "panel1";
-            this.panel1.Padding = new System.Windows.Forms.Padding(8);
-            this.panel1.Size = new System.Drawing.Size(940, 522);
-            this.panel1.TabIndex = 3;
+            this.toolStripStatusLabel3.Name = "toolStripStatusLabel3";
+            this.toolStripStatusLabel3.Size = new System.Drawing.Size(0, 16);
+            // 
+            // toolStripStatusLabel4
+            // 
+            this.toolStripStatusLabel4.Name = "toolStripStatusLabel4";
+            this.toolStripStatusLabel4.Size = new System.Drawing.Size(0, 16);
+            // 
+            // splitContainer1
+            // 
+            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer1.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
+            this.splitContainer1.IsSplitterFixed = true;
+            this.splitContainer1.Location = new System.Drawing.Point(0, 31);
+            this.splitContainer1.Name = "splitContainer1";
+            this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainer1.Panel1
+            // 
+            this.splitContainer1.Panel1.Controls.Add(this.richTextBox1);
+            this.splitContainer1.Panel1.Controls.Add(this.button1);
+            // 
+            // splitContainer1.Panel2
+            // 
+            this.splitContainer1.Panel2.Controls.Add(this.textBox1);
+            this.splitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(4);
+            this.splitContainer1.Panel2MinSize = 40;
+            this.splitContainer1.Size = new System.Drawing.Size(940, 529);
+            this.splitContainer1.SplitterDistance = 480;
+            this.splitContainer1.TabIndex = 6;
             // 
             // richTextBox1
             // 
@@ -212,42 +268,65 @@
             this.richTextBox1.Cursor = System.Windows.Forms.Cursors.Default;
             this.richTextBox1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.richTextBox1.Font = new System.Drawing.Font("游ゴシック", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.richTextBox1.Location = new System.Drawing.Point(8, 8);
+            this.richTextBox1.Location = new System.Drawing.Point(0, 0);
             this.richTextBox1.Margin = new System.Windows.Forms.Padding(2);
             this.richTextBox1.Name = "richTextBox1";
             this.richTextBox1.ReadOnly = true;
             this.richTextBox1.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.richTextBox1.Size = new System.Drawing.Size(924, 506);
-            this.richTextBox1.TabIndex = 3;
+            this.richTextBox1.ShortcutsEnabled = false;
+            this.richTextBox1.Size = new System.Drawing.Size(940, 480);
+            this.richTextBox1.TabIndex = 4;
             this.richTextBox1.Text = resources.GetString("richTextBox1.Text");
             this.richTextBox1.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.RichTextBox1_LinkClicked);
             this.richTextBox1.TextChanged += new System.EventHandler(this.RichTextBox1_TextChanged);
             // 
-            // toolStripStatusLabel3
+            // button1
             // 
-            this.toolStripStatusLabel3.Name = "toolStripStatusLabel3";
-            this.toolStripStatusLabel3.Size = new System.Drawing.Size(171, 23);
-            this.toolStripStatusLabel3.Text = "toolStripStatusLabel3";
+            this.button1.Location = new System.Drawing.Point(787, 321);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(94, 74);
+            this.button1.TabIndex = 1;
+            this.button1.TabStop = false;
+            this.button1.Text = "button1";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.Button1_Click);
+            // 
+            // textBox1
+            // 
+            this.textBox1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.textBox1.Font = new System.Drawing.Font("メイリオ", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.textBox1.ImeMode = System.Windows.Forms.ImeMode.On;
+            this.textBox1.Location = new System.Drawing.Point(4, 4);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(932, 37);
+            this.textBox1.TabIndex = 0;
+            this.textBox1.Enter += new System.EventHandler(this.TextBox1_Enter);
             // 
             // Form1
             // 
+            this.AcceptButton = this.button1;
             this.AutoScaleDimensions = new System.Drawing.SizeF(120F, 120F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(940, 582);
-            this.Controls.Add(this.panel1);
+            this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "Form1";
             this.Text = "SyncRoomChatTool";
+            this.Activated += new System.EventHandler(this.TextBox1_Enter);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
-            this.panel1.ResumeLayout(false);
+            this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel2.ResumeLayout(false);
+            this.splitContainer1.Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
+            this.splitContainer1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -260,8 +339,6 @@
         public System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         public System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel2;
         public System.Windows.Forms.StatusStrip statusStrip1;
-        private System.Windows.Forms.Panel panel1;
-        public System.Windows.Forms.RichTextBox richTextBox1;
         private System.Windows.Forms.ToolStripMenuItem MenuOption;
         public System.Windows.Forms.MenuStrip menuStrip1;
         public System.Windows.Forms.ToolStripMenuItem MenuTool;
@@ -274,6 +351,14 @@
         private System.Windows.Forms.ToolStripMenuItem MenuEnableTwitcasting;
         private System.Windows.Forms.ToolStripMenuItem MenuSettingTwitcasting;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel3;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem MenuWindowTopMost;
+        private System.Windows.Forms.SplitContainer splitContainer1;
+        public System.Windows.Forms.RichTextBox richTextBox1;
+        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel4;
+        private System.Windows.Forms.ToolStripMenuItem MenuOpenLink;
     }
 }
 

@@ -7,7 +7,7 @@ namespace SyncRoomChatTool
 {
     public partial class Help : Form
     {
-        string url = "https://github.com/dhamaoka/SyncRoomChatTool/wiki";
+        readonly string url = "https://github.com/dhamaoka/SyncRoomChatTool/wiki";
 
         public Help()
         {
@@ -74,7 +74,7 @@ namespace SyncRoomChatTool
             */
         }
 
-        private void webView21_CoreWebView2InitializationCompleted(object sender, Microsoft.Web.WebView2.Core.CoreWebView2InitializationCompletedEventArgs e)
+        private void WebView21_CoreWebView2InitializationCompleted(object sender, Microsoft.Web.WebView2.Core.CoreWebView2InitializationCompletedEventArgs e)
         {
             webView21.CoreWebView2.Navigate(url);
         }

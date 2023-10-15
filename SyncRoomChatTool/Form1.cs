@@ -6,6 +6,7 @@ using System.Linq;
 using System.Media;
 using System.Net;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -22,12 +23,14 @@ namespace SyncRoomChatTool
         enum CommentDivider : int
         {
             Comment = 1,
-            UserName = 2
+            UserName = 2,
+            LinkedUserName = 3
         }
 
         private static string LastTwitCastingComment = "";
         private static string NowTwitCastingComment = "";
         private static int commentCounter = 0;
+        private static string LastURL = "";
 
         private static User TwiCasUser = new User();
 
@@ -95,15 +98,15 @@ namespace SyncRoomChatTool
         private class SpeakerFromAPI
         {
             public string Name { get; set; }
-            public string speaker_uuid { get; set; }
-            public List<StyleFromAPI> styles { get; set; }
-            public string version { get; set; }
+            public string Speaker_uuid { get; set; }
+            public List<StyleFromAPI> Styles { get; set; }
+            public string Version { get; set; }
         }
 
         private class StyleFromAPI
         {
-            public int id { get; set; }
-            public string name { get; set; }
+            public int Id { get; set; }
+            public string Name { get; set; }
         }
 
         private class Speaker
@@ -116,34 +119,49 @@ namespace SyncRoomChatTool
 
         private class CommentText
         {
-            static readonly int[] RandTable = new int[] { 0, 8, 10, 14, 20, 21, 2, 13, 11, 3, 29, 30, 23, 27 };
+            static readonly int[] RandTable = new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 20 };
             static readonly string BlankLineUserName = "改行コピペ野郎";
 
             public bool IsBlank;
             public bool IsLink;
-            public bool ChimeFlg = true;
+            public bool ChimeFlg = false;
             public bool SpeechFlg = true;
             public int Lang;
             public int StyleId = 2;
             public string UserName { get; set; }
             public string Comment { get; set; }
+            public string UriString { get; set; }
             public DateTime LastCommentTime;
             public DateTime NowCommentTime;
             public bool CanSpeech;
 
             public CommentText(string newComment, string lastComment, bool appCanSpeech)
             {
-                if (appCanSpeech == false)
-                {
-                    CanSpeech = false;
-                    return;
-                }
-
                 //末尾がコロンかどうか。空行チェック。
                 IsBlank = (newComment.Substring(newComment.Length - 1, 1) == ":");
                 if (IsBlank)
                 {
                     CanSpeech = false;
+                    return;
+                }
+
+                //ユーザ名の取得と、コロンを除いたコメント部分の取得
+                string[] ary = newComment.Split(new string[] { ":" }, StringSplitOptions.None);
+                if (ary.Length < 2)
+                {
+                    UserName = BlankLineUserName;
+                    Comment = newComment;
+                }
+                else
+                {
+                    UserName = ary[ary.Length - (int)CommentDivider.UserName];
+                    Comment = ary[ary.Length - (int)CommentDivider.Comment];
+                }
+
+                UserName.Trim();
+                if (UserName == BlankLineUserName)
+                {
+                    //改行コピペマンに対しては、ユーザ周りの処理をしなくていいんじゃないかなと。コマンド系の処理も。
                     return;
                 }
 
@@ -153,19 +171,45 @@ namespace SyncRoomChatTool
                 IsLink = (match.Success);
                 if (IsLink)
                 {
+                    UserName = ary[ary.Length - (int)CommentDivider.LinkedUserName];
                     Comment = "リンクが張られました。";
                     Lang = 0;
-                    if (File.Exists(App.Default.linkWaveFilePath))
+                    if (appCanSpeech)
                     {
-                        SoundPlayer player = new SoundPlayer(App.Default.linkWaveFilePath);
-                        //非同期再生する
-                        player.Play();
+                        if (File.Exists(App.Default.linkWaveFilePath))
+                        {
+                            SoundPlayer player = new SoundPlayer(App.Default.linkWaveFilePath);
+                            //非同期再生する
+                            player.Play();
+                        }
+                        else
+                        {
+                            SpeechSynthe(this);
+                        }
                     }
-                    else
+
+                    UriString = newComment.Substring(match.Index);
+                    Uri u = new Uri(UriString);
+
+                    if (UriString != LastURL)
                     {
-                        SpeechSynthe(this);
+                        if (App.Default.OpenLink)
+                        {
+                            if (u.IsAbsoluteUri)
+                            {
+                                Process.Start(UriString);
+                            }
+                        }
                     }
-                    lastComment = newComment;
+
+                    LastURL = UriString;
+                    CanSpeech = false;
+
+                    return;
+                }
+
+                if (appCanSpeech == false)
+                {
                     CanSpeech = false;
                     return;
                 }
@@ -212,30 +256,9 @@ namespace SyncRoomChatTool
                     Lang = 1;
                 }
 
-                //ユーザ名の取得と、コロンを除いたコメント部分の取得
-                string[] ary = newComment.Split(new string[] { ":" }, StringSplitOptions.None);
-                if (ary.Length < 2)
-                {
-                    UserName = BlankLineUserName;
-                    Comment = newComment;
-                }
-                else
-                {
-                    UserName = ary[ary.Length - (int)CommentDivider.UserName];
-                    Comment = ary[ary.Length - (int)CommentDivider.Comment];
-                }
-
-                UserName.Trim();
-                if (UserName == BlankLineUserName)
-                {
-                    //改行コピペマンに対しては、ユーザ周りの処理をしなくていいんじゃないかなと。コマンド系の処理も。
-                    return;
-                }
-
-
                 //ランダム音声割り当て用。ここ、コメントしたら全員デフォでしゃべる。
                 Random rnd = new Random();
-                StyleId = rnd.Next(RandTable.Length);
+                StyleId = RandTable[rnd.Next(RandTable.Length)];
 
                 bool existsFlg = UserTable.Exists(x => x.UserName == UserName);
 
@@ -357,11 +380,11 @@ namespace SyncRoomChatTool
             }
         }
 
-        private static UIAutomationLib ui = new UIAutomationLib();
+        private static readonly UIAutomationLib ui = new UIAutomationLib();
         private static readonly string voiceVoxDefaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs\\VOICEVOX\\run.exe");
 
-        static List<Speaker> UserTable = new List<Speaker> { };
-        static List<Speaker> StyleDef = new List<Speaker> { };
+        static readonly List<Speaker> UserTable = new List<Speaker> { };
+        static readonly List<Speaker> StyleDef = new List<Speaker> { };
 
         private async void Form1_Load(object sender, EventArgs e)
         {
@@ -373,6 +396,9 @@ namespace SyncRoomChatTool
             MenuEnableTwitcasting.Checked = App.Default.useTwitcasting;
             MenuEnebleSpeech.Checked = App.Default.canSpeech;
             MenuUseVoiceVox.Checked = App.Default.UseVoiceVox;
+            MenuWindowTopMost.Checked = App.Default.WindowTopMost;
+            MenuOpenLink.Checked = App.Default.OpenLink;
+            this.TopMost = MenuWindowTopMost.Checked;
             richTextBox1.LanguageOption = RichTextBoxLanguageOptions.UIFonts;
             richTextBox1.Font = App.Default.logFont;
             richTextBox1.ZoomFactor = App.Default.zoomFacter;
@@ -451,16 +477,22 @@ namespace SyncRoomChatTool
                 if (ret != null)
                 {
                     //Jsonのデシリアライズ。StyleIdの一覧を作る。
-                    List<SpeakerFromAPI> VoiceBoxSpeakers = JsonConvert.DeserializeObject<List<SpeakerFromAPI>>(ret.ToString());
+                    List<SpeakerFromAPI> VoiceVoxSpeakers = JsonConvert.DeserializeObject<List<SpeakerFromAPI>>(ret.ToString());
 
-                    foreach (SpeakerFromAPI speaker in VoiceBoxSpeakers)
+                    foreach (SpeakerFromAPI speaker in VoiceVoxSpeakers)
                     {
-                        foreach (StyleFromAPI st in speaker.styles)
+#if DEBUG
+                        Debug.Print(speaker.Name);
+#endif
+                        foreach (StyleFromAPI st in speaker.Styles)
                         {
                             Speaker addLine = new Speaker
                             {
-                                StyleId = st.id
+                                StyleId = st.Id
                             };
+#if DEBUG
+                            Debug.Print(addLine.StyleId.ToString());
+#endif
                             StyleDef.Add(addLine);
                         }
                     }
@@ -483,6 +515,7 @@ namespace SyncRoomChatTool
             DateTime lastDt = DateTime.Now;
             DateTime newDt;
             int counter = 0;
+            logView.Text = "";
 
             while (true)
             {
@@ -541,7 +574,12 @@ namespace SyncRoomChatTool
                                 if (oldLog != vp.Current.Value)
                                 {
                                     oldLog = vp.Current.Value;
-                                    logView.Text = vp.Current.Value;
+
+                                    //todo: ここでどすこーいと純正チャットウィンドウの中身を放り込んでるので、
+                                    //      たまにHTTPリンクが貼れないのかなぁと。
+                                    //      全部、AppendTextの方がいいかなぁ。
+                                    //logView.Text = vp.Current.Value;
+                                    //logView.AppendText(Environment.NewLine);
 
                                     //改行で区切って、一番最後を最新コメントとする。
                                     string[] ary = vp.Current.Value.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
@@ -553,6 +591,44 @@ namespace SyncRoomChatTool
                                         LastCommentTime = lastDt,
                                         NowCommentTime = newDt
                                     };
+
+                                    if (string.IsNullOrEmpty(CommentObj.Comment) == false)
+                                    {
+                                        //何かコメントあり。
+                                        if (string.IsNullOrEmpty(logView.Text) == false)
+                                        {
+                                            //かつ、リッチテキストボックスが空じゃない＝改行する。
+                                            logView.AppendText(Environment.NewLine);
+                                        }
+
+                                        string addLine = CommentObj.UserName;
+                                        if (string.IsNullOrEmpty(addLine) == false)
+                                        {
+                                            logView.AppendText(addLine);
+
+                                            string separator = " ： ";
+                                            if (CommentObj.IsLink)
+                                            {
+                                                //リンクだった時の処理
+                                                logView.AppendText(Environment.NewLine);
+                                                addLine = " \t" + CommentObj.UriString;
+                                            }
+                                            else
+                                            {
+                                                //リンクじゃない。
+                                                addLine = separator + CommentObj.Comment;
+                                            }
+
+                                            logView.AppendText(addLine);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        //コメントなし。改行のみ。
+                                        CommentObj.CanSpeech = false;
+                                    }
+                                    
+                                    
 
                                     if (CommentObj.CanSpeech)
                                     {
@@ -603,11 +679,12 @@ namespace SyncRoomChatTool
                 else
                 {
                     toolMessage = "は起動されていません。";
+                    ststp.Items[1].Text = "チャットウィンドウなし。";
                     oldLog = "";
                     oldComment = "";
                 }
                 ststp.Items[0].Text = ProcessName + toolMessage;
-
+                ststp.Refresh();
                 await Task.Delay((int)App.Default.waitTiming);
             }
         }
@@ -940,6 +1017,7 @@ namespace SyncRoomChatTool
                 App.Default.cutLength = apConf.cutLength;
                 App.Default.VoiceVoxAddress = apConf.voiceVoxAddress;
                 App.Default.VoiceVoxPath = apConf.voiceVoxPath;
+                App.Default.WindowTopMost = apConf.windowTopMost;
                 App.Default.Save();
             }
         }
@@ -962,6 +1040,8 @@ namespace SyncRoomChatTool
             App.Default.logFont = richTextBox1.Font;
             App.Default.windowSize = this.Size;
             App.Default.useTwitcasting = MenuEnableTwitcasting.Checked;
+            App.Default.WindowTopMost = MenuWindowTopMost.Checked;
+            App.Default.OpenLink = MenuOpenLink.Checked;
             App.Default.Save();
         }
 
@@ -987,9 +1067,11 @@ namespace SyncRoomChatTool
 
         private void Menu_Help_Click(object sender, EventArgs e)
         {
-            Help help = new Help();
-            help.Width = (int)Math.Floor(this.Width * 0.9);
-            help.Height = (int)Math.Floor(this.Height * 0.9);
+            Help help = new Help
+            {
+                Width = (int)Math.Floor(this.Width * 0.9),
+                Height = (int)Math.Floor(this.Height * 0.9)
+            };
 
             help.ShowDialog();
         }
@@ -1035,6 +1117,90 @@ namespace SyncRoomChatTool
                     toolStripStatusLabel3.Text = "ツイキャスユーザ情報の取得に失敗しました。";
                 }
             }
+        }
+
+        private void MenuWindowTopMost_Click(object sender, EventArgs e)
+        {
+            App.Default.WindowTopMost = MenuWindowTopMost.Checked;
+            ActiveForm.TopMost = MenuWindowTopMost.Checked;
+            App.Default.Save();
+        }
+
+        private void Button1_Click(object sender, EventArgs e)
+        {
+            if (textBox1.Text.Length < 1)
+            {
+                return;
+            }
+
+            //ここにSyncRoomのチャットにテキストを流す処理を入れる。
+            TargetProcess targetProc = new TargetProcess("SYNCROOM");
+            if (targetProc.IsAlive)
+            {
+                IntPtr chatwHnd = ui.FindHWndByCaptionAndProcessID("チャット", targetProc.Id);
+
+                if (chatwHnd == IntPtr.Zero)
+                {
+                    // チャットウィンドウの起動
+                    IntPtr SyncwHnd = ui.FindHWndByCaptionAndProcessID("SYNCROOM", targetProc.Id);
+                    AutomationElement mainWindow = AutomationElement.FromHandle(SyncwHnd);
+
+                    AutomationElement buttonElement = ui.GetButtonElement(mainWindow, "チャット");
+                    if (buttonElement.Current.Name != "チャット")
+                    {
+                        return;
+                    }
+
+                    InvokePattern bt = ui.GetInvokePattern(buttonElement);
+                    bt.Invoke();
+                }
+
+                //チャットウィンドウ再取得
+                chatwHnd = ui.FindHWndByCaptionAndProcessID("チャット", targetProc.Id);
+                if (chatwHnd != IntPtr.Zero)
+                {
+                    AutomationElement chatWindow = AutomationElement.FromHandle(chatwHnd);
+
+                    AutomationElement chatInput = ui.GetEditElement(chatWindow, "チャット入力");
+                    if (chatInput.Current.Name != "チャット入力") 
+                    {
+                        return;  
+                    }
+
+                    ValuePattern vpInput = ui.GetValuePattern(chatInput);
+                    if (vpInput == null) { return; }
+                    vpInput.SetValue(textBox1.Text);
+                    ui.SendReturn(chatwHnd);
+                    
+                    this.Activate();
+                    textBox1.Text = string.Empty;
+                }
+            }
+        }
+
+        private void TextBox1_Enter(object sender, EventArgs e)
+        {
+            TargetProcess targetProc = new TargetProcess("SYNCROOM");
+            if (targetProc.IsAlive)
+            {
+                IntPtr chatwHnd = ui.FindHWndByCaptionAndProcessID("チャット", targetProc.Id);
+                if (chatwHnd != IntPtr.Zero)
+                {
+                    AutomationElement chatWindow = AutomationElement.FromHandle(chatwHnd);
+                    AutomationElement chatInput = ui.GetEditElement(chatWindow, "チャット入力");
+                    ValuePattern vpInput = ui.GetValuePattern(chatInput);
+                    if (vpInput == null) {
+                        return; 
+                    }
+                    ui.SendMinimized(chatwHnd);
+                }
+            }
+        }
+
+        private void MenuOpenLink_Click(object sender, EventArgs e)
+        {
+            App.Default.OpenLink = MenuOpenLink.Checked;
+            App.Default.Save();
         }
     }
 }

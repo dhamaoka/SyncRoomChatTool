@@ -38,7 +38,7 @@ namespace SyncRoomChatTool
             Close();
         }
 
-        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void LinkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
 
             System.Diagnostics.Process.Start($"https://apiv2.twitcasting.tv/oauth2/authorize?client_id={ClientId}&response_type=token");
