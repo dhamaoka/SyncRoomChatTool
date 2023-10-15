@@ -5,6 +5,8 @@ VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncRoomChatTool", "SyncRoomChatTool.csproj", "{64E07926-D9A4-4D60-8D58-89C26A1D388D}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup", "..\Setup\Setup.vdproj", "{F80FC9AD-486A-4353-B8D5-672977A4DC28}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,6 +21,10 @@ Global
 		{64E07926-D9A4-4D60-8D58-89C26A1D388D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64E07926-D9A4-4D60-8D58-89C26A1D388D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{64E07926-D9A4-4D60-8D58-89C26A1D388D}.Release|x64.ActiveCfg = Release|Any CPU
+		{F80FC9AD-486A-4353-B8D5-672977A4DC28}.Debug|Any CPU.ActiveCfg = Debug
+		{F80FC9AD-486A-4353-B8D5-672977A4DC28}.Debug|x64.ActiveCfg = Debug
+		{F80FC9AD-486A-4353-B8D5-672977A4DC28}.Release|Any CPU.ActiveCfg = Release
+		{F80FC9AD-486A-4353-B8D5-672977A4DC28}.Release|x64.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
