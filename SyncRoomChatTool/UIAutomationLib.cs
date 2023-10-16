@@ -39,7 +39,8 @@ namespace SyncRoomChatTool
         const int WM_SYSCOMMAND = 0x0112;
         const int SC_MINIMIZE = 0xF020;
 
-        public void SendReturn(IntPtr hWnd) {
+        public void SendReturn(IntPtr hWnd)
+        {
             PostMessage(hWnd, WM_KEYDOWN, VK_RETURN, 0);
         }
 
@@ -94,7 +95,7 @@ namespace SyncRoomChatTool
         }
 
         // Editエレメントを探して返す。
-        public AutomationElement GetEditElement(AutomationElement rootElement,string elementName)
+        public AutomationElement GetEditElement(AutomationElement rootElement, string elementName)
         {
             AutomationElementCollection allElements = rootElement.FindAll(TreeScope.Element | TreeScope.Descendants, new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit));
 

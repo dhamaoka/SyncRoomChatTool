@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -6,15 +7,11 @@ using System.Linq;
 using System.Media;
 using System.Net;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Automation;
 using System.Windows.Forms;
-using System.Xml.Linq;
-using Newtonsoft.Json;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace SyncRoomChatTool
 {
@@ -27,12 +24,81 @@ namespace SyncRoomChatTool
             LinkedUserName = 3
         }
 
+        //audio_queryした後に帰ってくるレスポンスを編集するためのクラス群。
+        public class AccentPhrases
+        {
+            [JsonProperty("moras")]
+            public List<Mora> Moras { get; set; } = new List<Mora>();
+            [JsonProperty("accent")]
+            public double Accent { get; set; } = 0;
+            [JsonProperty("pause_mora")]
+            public PauseMora PauseMora { get; set; } = new PauseMora();
+            [JsonProperty("is_interrogative")]
+            public bool IsInterrogative { get; set; } = false;
+        }
+
+        public class Mora
+        {
+            [JsonProperty("text")]
+            public string Text { get; set; } = "string";
+            [JsonProperty("consonant")]
+            public string Consonant { get; set; } = "string";
+            [JsonProperty("consonant_length")]
+            public string ConsonantLength { get; set; }
+            [JsonProperty("vowel")]
+            public string Vowel { get; set; } = "string";
+            [JsonProperty("vowel_length")]
+            public double VowelLength { get; set; } = 0;
+            [JsonProperty("pitch")]
+            public double Pitch { get; set; } = 0;
+        }
+
+        public class PauseMora
+        {
+            [JsonProperty("text")]
+            public string Text { get; set; } = "string";
+            [JsonProperty("consonant")]
+            public string Consonant { get; set; } = "string";
+            [JsonProperty("consonant_length")]
+            public string ConsonantLength { get; set; }
+            [JsonProperty("vowel")]
+            public string Vowel { get; set; } = "string";
+            [JsonProperty("vowel_length")]
+            public double VowelLength { get; set; } = 0;
+            [JsonProperty("pitch")]
+            public double Pitch { get; set; } = 0;
+        }
+
+        public class AccentPhasesRoot
+        {
+            [JsonProperty("accent_phrases")]
+            public List<AccentPhrases> AccentPhrases { get; set; } = new List<AccentPhrases>{ };
+            [JsonProperty("speedScale")]
+            public double SpeedScale { get; set; } = 0;
+            [JsonProperty("pitchScale")]
+            public double PitchScale { get; set; } = 0;
+            [JsonProperty("intonationScale")]
+            public double IntonationScale { get; set; } = 0;
+            [JsonProperty("volumeScale")]
+            public double VolumeScale { get; set; } = 0;
+            [JsonProperty("prePhonemeLength")]
+            public double PrePhonemeLength { get; set; } = 0;
+            [JsonProperty("postPhonemeLength")]
+            public double PostPhonemeLength { get; set; } = 0;
+            [JsonProperty("outputSamplingRate")]
+            public double OutputSamplingRate { get; set; } = 0;
+            [JsonProperty("outputStereo")]
+            public bool OutputStereo { get; set; } = true;
+            [JsonProperty("kana")]
+            public string Kana { get; set; } = "string";
+        }
+
         private static string LastTwitCastingComment = "";
         private static string NowTwitCastingComment = "";
         private static int commentCounter = 0;
         private static string LastURL = "";
 
-        private static User TwiCasUser = new User();
+        private static User TwiCasUser = new User{ };
 
         public Form1()
         {
@@ -44,7 +110,7 @@ namespace SyncRoomChatTool
             public string Supporter_count { get; set; }
             public string Supporting_count { get; set; }
             [JsonProperty("user")]
-            public User UserInfo { get;set;}
+            public User UserInfo { get; set; }
         }
 
         public class User
@@ -117,9 +183,11 @@ namespace SyncRoomChatTool
             public bool SpeechFlg { get; set; }
         }
 
+        static readonly List<Speaker> VoiceLists = new List<Speaker> { };
+
         private class CommentText
         {
-            static readonly int[] RandTable = new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 20 };
+            static readonly int[] RandTable = new int[] { 0, 1, 2, 3, 6, 7, 8, 9, 10, 14, 16, 20, 23, 29 };
             static readonly string BlankLineUserName = "改行コピペ野郎";
 
             public bool IsBlank;
@@ -204,7 +272,6 @@ namespace SyncRoomChatTool
 
                     LastURL = UriString;
                     CanSpeech = false;
-
                     return;
                 }
 
@@ -241,12 +308,13 @@ namespace SyncRoomChatTool
                     newComment.Replace("ω", "");
                 }
 
-                if (string.IsNullOrEmpty(newComment)) {
+                if (string.IsNullOrEmpty(newComment))
+                {
                     return;
                 }
 
                 //英数のみかのチェックというか、指定のワードが入ってるかどうか（主に日本語）
-                match = Regex.Match(newComment, "[ぁ-んァ-ヶｱ-ﾝﾞﾟ一-龠！-／：-＠［-｀｛-～、-〜”’・]");
+                match = Regex.Match(Comment, "[ぁ-んァ-ヶｱ-ﾝﾞﾟ一-龠！-／：-＠［-｀｛-～、-〜”’・]");
                 if (match.Success)
                 {
                     Lang = 0;
@@ -257,7 +325,7 @@ namespace SyncRoomChatTool
                 }
 
                 //ランダム音声割り当て用。ここ、コメントしたら全員デフォでしゃべる。
-                Random rnd = new Random();
+                Random rnd = new Random{ };
                 StyleId = RandTable[rnd.Next(RandTable.Length)];
 
                 bool existsFlg = UserTable.Exists(x => x.UserName == UserName);
@@ -380,11 +448,12 @@ namespace SyncRoomChatTool
             }
         }
 
-        private static readonly UIAutomationLib ui = new UIAutomationLib();
+        private static readonly UIAutomationLib ui = new UIAutomationLib{ };
         private static readonly string voiceVoxDefaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs\\VOICEVOX\\run.exe");
 
         static readonly List<Speaker> UserTable = new List<Speaker> { };
         static readonly List<Speaker> StyleDef = new List<Speaker> { };
+        static readonly double Volueme = 0;
 
         private async void Form1_Load(object sender, EventArgs e)
         {
@@ -431,7 +500,7 @@ namespace SyncRoomChatTool
 
             if (string.IsNullOrEmpty(App.Default.VoiceVoxAddress))
             {
-                App.Default.VoiceVoxAddress = "http://localhost:50021";
+                App.Default.VoiceVoxAddress = "http://127.0.0.1:50021";
             }
 
             App.Default.Save();
@@ -439,6 +508,7 @@ namespace SyncRoomChatTool
             this.Size = App.Default.windowSize;
             this.Refresh();
             richTextBox1.Refresh();
+            this.Activate();
 
             TargetProcess tp = new TargetProcess("run");
             if (!string.IsNullOrEmpty(App.Default.VoiceVoxPath))
@@ -459,7 +529,7 @@ namespace SyncRoomChatTool
                     catch
                     {
                         richTextBox1.Text += "VOICEVOXの自動起動に失敗しました。";
-                        SpeechSynthesizer synth = new SpeechSynthesizer();
+                        SpeechSynthesizer synth = new SpeechSynthesizer{ };
                         synth.SelectVoice("Microsoft Haruka Desktop");
                         synth.Speak($"エラーが発生しています。VOICEVOXの自動起動に失敗しました。");
                         Application.Exit();
@@ -472,7 +542,7 @@ namespace SyncRoomChatTool
                     url += "/";
                 }
                 url += "speakers";
-                var client = new ServiceHttpClient(url,ServiceHttpClient.RequestType.none);
+                var client = new ServiceHttpClient(url, ServiceHttpClient.RequestType.none);
                 var ret = client.Get();
                 if (ret != null)
                 {
@@ -481,18 +551,24 @@ namespace SyncRoomChatTool
 
                     foreach (SpeakerFromAPI speaker in VoiceVoxSpeakers)
                     {
-#if DEBUG
-                        Debug.Print(speaker.Name);
-#endif
                         foreach (StyleFromAPI st in speaker.Styles)
                         {
                             Speaker addLine = new Speaker
                             {
                                 StyleId = st.Id
                             };
-#if DEBUG
-                            Debug.Print(addLine.StyleId.ToString());
-#endif
+
+                            //ホントはSyncRoomのユーザ用のClassだけど、Voiceの一覧にも流用
+                            //ホントは自分のIDとボイス名だけでもいい気がするんだけど、そのマッチは面倒だったので。
+                            //チャットが入る度に、その人の名前と割り当てられたボイスをステータスバーに表示。
+                            //速いと流れるね。最後の人のは見れるけど。参考程度の情報。声変えたい人が居たら教えてあげられるぐらいの。
+                            Speaker addVoice = new Speaker
+                            {
+                                UserName = $"{speaker.Name}({st.Name})",
+                                StyleId = addLine.StyleId
+                            };
+
+                            VoiceLists.Add(addVoice);
                             StyleDef.Add(addLine);
                         }
                     }
@@ -537,7 +613,7 @@ namespace SyncRoomChatTool
                     {
                         CommentInfo();
 #if DEBUG
-                        Debug.WriteLine(DateTime.Now.ToString());
+                        //Debug.WriteLine(DateTime.Now.ToString());
 #endif
                     }
                 }
@@ -574,12 +650,6 @@ namespace SyncRoomChatTool
                                 if (oldLog != vp.Current.Value)
                                 {
                                     oldLog = vp.Current.Value;
-
-                                    //todo: ここでどすこーいと純正チャットウィンドウの中身を放り込んでるので、
-                                    //      たまにHTTPリンクが貼れないのかなぁと。
-                                    //      全部、AppendTextの方がいいかなぁ。
-                                    //logView.Text = vp.Current.Value;
-                                    //logView.AppendText(Environment.NewLine);
 
                                     //改行で区切って、一番最後を最新コメントとする。
                                     string[] ary = vp.Current.Value.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
@@ -627,8 +697,6 @@ namespace SyncRoomChatTool
                                         //コメントなし。改行のみ。
                                         CommentObj.CanSpeech = false;
                                     }
-                                    
-                                    
 
                                     if (CommentObj.CanSpeech)
                                     {
@@ -638,29 +706,26 @@ namespace SyncRoomChatTool
 
                                     oldComment = newComment;
                                     lastDt = newDt;
-                                }
-                                else
-                                {
-                                    // テストモード（音声ファイルは出力しない）で空打ち（エンジンには合成させてる）すると
-                                    // 多少は速くなるかなぁと思ったが、そんなに変わらん気もする。
-                                    // ここが有効だと、監視中ずーっとエンジン動かしてることにはなるんだよねぇ。
-                                    // 一回リリースしてみるか
 
-                                    CommentText CommentObj = new CommentText("あ","ダミーオールド",App.Default.canSpeech)
+                                    bool existsFlg = VoiceLists.Exists(x => x.StyleId == CommentObj.StyleId);
+                                    if (existsFlg)
                                     {
-                                        LastCommentTime = DateTime.Now,
-                                        NowCommentTime = DateTime.Now
-                                    };
-                                    SpeechSynthe(CommentObj, true);
+                                        //VoiceListsから、StyleIdその他の取り出し。
+                                        foreach (var item in VoiceLists.Where(x => x.StyleId == CommentObj.StyleId))
+                                        {
+                                            ststp.Items[3].Text = $"名前：{CommentObj.UserName} ボイス：[{item.StyleId}]{item.UserName}";
+                                        }
+                                    }
                                 }
                             }
                         }
                         else
-                        {                            
+                        {
                             ststp.Items[1].Text = "チャットログ待機中…";
                         }
                     }
-                    catch (ArgumentException agex) {
+                    catch (ArgumentException agex)
+                    {
                         //hwnd が見つからなかった系のエラーは握りつぶす系。
                         //SyncRoomの起動待ち状態で、起動直後で転ける様子。
                         ststp.Items[1].Text = $"{agex.Message}";
@@ -669,7 +734,7 @@ namespace SyncRoomChatTool
                     {
                         string errMsg = $"\r\nエラーが発生しています。{ex.Message}";
                         logView.Text += errMsg;
-                        SpeechSynthesizer synth = new SpeechSynthesizer();
+                        SpeechSynthesizer synth = new SpeechSynthesizer{ };
                         synth.SelectVoice("Microsoft Haruka Desktop");
                         synth.SpeakAsync(errMsg);
                         await Task.Delay(3000);
@@ -684,6 +749,7 @@ namespace SyncRoomChatTool
                     oldComment = "";
                 }
                 ststp.Items[0].Text = ProcessName + toolMessage;
+
                 ststp.Refresh();
                 await Task.Delay((int)App.Default.waitTiming);
             }
@@ -746,7 +812,7 @@ namespace SyncRoomChatTool
         /// APIをどついてツイキャスのコメントをチェックする。
         /// </summary>
         static void CommentInfo()
-        {           
+        {
             if (App.Default.useTwitcasting == false)
             {
                 return;
@@ -886,7 +952,7 @@ namespace SyncRoomChatTool
             }
         }
 
-        private static async void SpeechSynthe(CommentText commentObj, bool testMode = false)
+        private static async void SpeechSynthe(CommentText commentObj)
         {
             //多分引っかからないとは思いつつ。
             if (string.IsNullOrEmpty(commentObj.Comment))
@@ -913,12 +979,7 @@ namespace SyncRoomChatTool
 
             if (App.Default.UseVoiceVox == true && commentObj.Lang == 0)
             {
-                SpeechVOICEVOX(commentObj, testMode);
-                return;
-            }
-
-            if (testMode)
-            {
+                SpeechVOICEVOX(commentObj);
                 return;
             }
 
@@ -937,27 +998,20 @@ namespace SyncRoomChatTool
                 synth.SelectVoice("Microsoft Zira Desktop");
             }
 #if DEBUG
-            Debug.WriteLine(commentObj.Comment);
+            //Debug.WriteLine(commentObj.Comment);
 #endif
             synth.SpeakAsync(commentObj.Comment);
         }
 
-        private static void SpeechVOICEVOX(CommentText commentObj, bool testMode = false)
+        private static void SpeechVOICEVOX(CommentText commentObj)
         {
             string baseUrl = App.Default.VoiceVoxAddress;
             string url;
 
             if (string.IsNullOrEmpty(baseUrl))
             {
-                /*
-                Debug.WriteLine("URLが入ってない");
-                SpeechSynthesizer synth = new SpeechSynthesizer();
-                synth.SelectVoice("Microsoft Haruka Desktop");
-                synth.SpeakAsync($"エラーが発生しています。ベースURLが入っていません。");
-                return;
-                */
                 //たまに消えるよね、君。
-                baseUrl = "http://localhost:50021";
+                baseUrl = "http://127.0.0.1:50021";
             }
 
             if (baseUrl.Substring(baseUrl.Length - 1, 1) != "/")
@@ -965,10 +1019,12 @@ namespace SyncRoomChatTool
                 baseUrl += "/";
             }
 
+            //クエリー作成
             url = baseUrl + $"audio_query?text='{commentObj.Comment}'&speaker={commentObj.StyleId}";
 
-            var client = new ServiceHttpClient(url,ServiceHttpClient.RequestType.none);
+            var client = new ServiceHttpClient(url, ServiceHttpClient.RequestType.none);
             String QueryResponce = "";
+
             var ret = client.Post(ref QueryResponce, "");
 
             if (ret == null)
@@ -976,15 +1032,16 @@ namespace SyncRoomChatTool
                 return;
             }
 
-            if (testMode)
-            {
-                return;
-            }
+            //音声合成
+            var queryJson = JsonConvert.DeserializeObject<AccentPhasesRoot>(QueryResponce.ToString());
+            queryJson.VolumeScale = App.Default.Volume;
+            QueryResponce = JsonConvert.SerializeObject(queryJson);
 
             if (ret.StatusCode.Equals(HttpStatusCode.OK))
             {
                 url = baseUrl + $"synthesis?speaker={commentObj.StyleId}";
-                client = new ServiceHttpClient(url,ServiceHttpClient.RequestType.none);
+                client = new ServiceHttpClient(url, ServiceHttpClient.RequestType.none);
+
                 string wavFile = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
                 ret = client.Post(ref QueryResponce, wavFile);
                 if (ret.StatusCode.Equals(HttpStatusCode.OK))
@@ -1009,7 +1066,7 @@ namespace SyncRoomChatTool
 
         private void MenuOption_Click(object sender, EventArgs e)
         {
-            AppConfig apConf = new AppConfig();
+            AppConfig apConf = new AppConfig{ };
             if (apConf.ShowDialog() == DialogResult.OK)
             {
                 App.Default.linkWaveFilePath = apConf.linkWaveFilePath;
@@ -1017,7 +1074,7 @@ namespace SyncRoomChatTool
                 App.Default.cutLength = apConf.cutLength;
                 App.Default.VoiceVoxAddress = apConf.voiceVoxAddress;
                 App.Default.VoiceVoxPath = apConf.voiceVoxPath;
-                App.Default.WindowTopMost = apConf.windowTopMost;
+                App.Default.Volume = apConf.volume;
                 App.Default.Save();
             }
         }
@@ -1067,18 +1124,12 @@ namespace SyncRoomChatTool
 
         private void Menu_Help_Click(object sender, EventArgs e)
         {
-            Help help = new Help
-            {
-                Width = (int)Math.Floor(this.Width * 0.9),
-                Height = (int)Math.Floor(this.Height * 0.9)
-            };
-
-            help.ShowDialog();
+            Process.Start("https://github.com/dhamaoka/SyncRoomChatTool/wiki");
         }
 
         private void MenuSettingTwitcasting_Click(object sender, EventArgs e)
         {
-            Twitcasting twitCasting = new Twitcasting();
+            Twitcasting twitCasting = new Twitcasting{ };
             if (twitCasting.ShowDialog() == DialogResult.OK)
             {
                 App.Default.AccessToken = twitCasting.AccessToken;
@@ -1162,16 +1213,16 @@ namespace SyncRoomChatTool
                     AutomationElement chatWindow = AutomationElement.FromHandle(chatwHnd);
 
                     AutomationElement chatInput = ui.GetEditElement(chatWindow, "チャット入力");
-                    if (chatInput.Current.Name != "チャット入力") 
+                    if (chatInput.Current.Name != "チャット入力")
                     {
-                        return;  
+                        return;
                     }
 
                     ValuePattern vpInput = ui.GetValuePattern(chatInput);
                     if (vpInput == null) { return; }
                     vpInput.SetValue(textBox1.Text);
                     ui.SendReturn(chatwHnd);
-                    
+
                     this.Activate();
                     textBox1.Text = string.Empty;
                 }
@@ -1189,8 +1240,9 @@ namespace SyncRoomChatTool
                     AutomationElement chatWindow = AutomationElement.FromHandle(chatwHnd);
                     AutomationElement chatInput = ui.GetEditElement(chatWindow, "チャット入力");
                     ValuePattern vpInput = ui.GetValuePattern(chatInput);
-                    if (vpInput == null) {
-                        return; 
+                    if (vpInput == null)
+                    {
+                        return;
                     }
                     ui.SendMinimized(chatwHnd);
                 }

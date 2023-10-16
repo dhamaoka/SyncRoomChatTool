@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq.Expressions;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -58,7 +57,7 @@ namespace SyncRoomChatTool
             // メンバ変数で使い回す手法を取っています。
             switch (reqType)
             {
-                case RequestType.none:                   
+                case RequestType.none:
                     this.httpClient = new HttpClient();
                     break;
                 case RequestType.userInfo:
@@ -126,7 +125,7 @@ namespace SyncRoomChatTool
 #if DEBUG
                 Debug.WriteLine(Aggre.Message);
 #endif
-                return null; 
+                return null;
             }
 
 
@@ -262,7 +261,8 @@ namespace SyncRoomChatTool
             // のように必要なら適宜追加していきます。
 
             // 対応サービス増やすかは分からんのにEnumにしたが、ここはSwitchにしてねぇと言う。
-            if (this.reqType != RequestType.none) {
+            if (this.reqType != RequestType.none)
+            {
                 request.Headers.Add("X-Api-Version", "2.0");
                 request.Headers.Add("Authorization", $"Bearer {App.Default.AccessToken}");
             }

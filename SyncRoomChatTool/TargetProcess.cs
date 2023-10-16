@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Windows.Forms;
 
 namespace SyncRoomChatTool
 {
@@ -13,22 +14,31 @@ namespace SyncRoomChatTool
 
         public TargetProcess(string pName)
         {
-            Process[] ps = Process.GetProcessesByName(pName);
-            foreach (Process p in ps)
+            try
             {
-                targetProcess = p;
-                break;
-            }
+                Process[] ps = Process.GetProcessesByName(pName);
+                foreach (Process p in ps)
+                {
+                    targetProcess = p;
+                    break;
+                }
 
-            if (targetProcess == null)
+                if (targetProcess == null)
+                {
+                    IsAlive = false;
+                    return;
+                }
+
+                Id = targetProcess.Id;
+                Proc = targetProcess;
+                Handle = targetProcess.Handle;
+            }
+            catch (Exception ex)
             {
-                IsAlive = false;
-                return;
+                string errMsg = $"エラーが発生しています。{ex.Message}";
+                MessageBox.Show(errMsg);
+                Application.Exit();
             }
-
-            Id = targetProcess.Id;
-            Proc = targetProcess;
-            Handle = targetProcess.Handle;
         }
     }
 }

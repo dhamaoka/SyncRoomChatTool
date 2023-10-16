@@ -12,7 +12,7 @@ namespace SyncRoomChatTool
         public string linkWaveFilePath;
         public string voiceVoxPath;
         public string voiceVoxAddress;
-        public bool windowTopMost;
+        public double volume;
 
         public AppConfig()
         {
@@ -29,6 +29,7 @@ namespace SyncRoomChatTool
         private void ButtonOK_Click(object sender, EventArgs e)
         {
             DialogResult = DialogResult.OK;
+            //ここの変数代入いらなくね？呼び出し側で、App.Defaultに入れてるんじゃないかな？
             waitTiming = numWait.Value;
             cutLength = numCut.Value;
             linkWaveFilePath = textBox1.Text;
@@ -44,11 +45,22 @@ namespace SyncRoomChatTool
             numWait.Value = App.Default.waitTiming;
             numCut.Value = App.Default.cutLength;
             textBox1.Text = App.Default.linkWaveFilePath;
-            textBox2.Text = App.Default.VoiceVoxPath;           
+            textBox2.Text = App.Default.VoiceVoxPath;
+            try
+            {
+                volume = App.Default.Volume;
+                trackBar1.Value = (int)Math.Floor(volume * 10);
+                numericUpDown1.Value = (decimal)volume;
+            }
+            catch
+            {
+                trackBar1.Value = 1;
+                numericUpDown1.Value = 1;
+            }
             if (string.IsNullOrEmpty(App.Default.VoiceVoxAddress))
             {
-                textBox3.Text = "http://localhost:50021";
-                App.Default.VoiceVoxAddress = "http://localhost:50021";
+                textBox3.Text = "http://127.0.0.1:50021";
+                App.Default.VoiceVoxAddress = "http://127.0.0.1:50021";
                 App.Default.Save();
             }
             else
@@ -146,6 +158,17 @@ namespace SyncRoomChatTool
                 //非同期再生する
                 player.Play();
             }
+        }
+
+        private void TrackBar1_ValueChanged(object sender, EventArgs e)
+        {
+            volume = (double)trackBar1.Value / 10;
+            numericUpDown1.Value = (decimal)volume;
+        }
+
+        private void NumericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+            trackBar1.Value = (int)((double)numericUpDown1.Value * 10);
         }
     }
 }

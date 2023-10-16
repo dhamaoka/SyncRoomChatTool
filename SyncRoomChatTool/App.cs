@@ -1,8 +1,7 @@
-﻿using System;
+﻿namespace SyncRoomChatTool
+{
 
-namespace SyncRoomChatTool {
-    
-    
+
     // このクラスでは設定クラスでの特定のイベントを処理することができます:
     //  SettingChanging イベントは、設定値が変更される前に発生します。
     //  PropertyChanged イベントは、設定値が変更された後に発生します。

@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Windows.Automation;
 using System.Windows.Forms;
 
 namespace SyncRoomChatTool

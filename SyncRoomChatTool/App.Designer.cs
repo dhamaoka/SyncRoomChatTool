@@ -37,7 +37,7 @@ namespace SyncRoomChatTool {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("MS UI Gothic, 10.2pt")]
+        [global::System.Configuration.DefaultSettingValueAttribute("游ゴシック, 12pt")]
         public global::System.Drawing.Font logFont {
             get {
                 return ((global::System.Drawing.Font)(this["logFont"]));
@@ -121,7 +121,7 @@ namespace SyncRoomChatTool {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost:50021")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://127.0.0.1:50021")]
         public string VoiceVoxAddress {
             get {
                 return ((string)(this["VoiceVoxAddress"]));
@@ -236,6 +236,18 @@ namespace SyncRoomChatTool {
             }
             set {
                 this["OpenLink"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public double Volume {
+            get {
+                return ((double)(this["Volume"]));
+            }
+            set {
+                this["Volume"] = value;
             }
         }
     }
