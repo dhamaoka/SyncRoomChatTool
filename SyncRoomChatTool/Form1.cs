@@ -288,6 +288,7 @@ namespace SyncRoomChatTool
             public int StyleId = 2;
             public string UserName { get; set; }
             public string Comment { get; set; }
+            public string RawComment { get; set; }
             public string UriString { get; set; }
             public DateTime LastCommentTime;
             public DateTime NowCommentTime;
@@ -314,6 +315,7 @@ namespace SyncRoomChatTool
                 {
                     UserName = ary[ary.Length - (int)CommentDivider.UserName];
                     Comment = ary[ary.Length - (int)CommentDivider.Comment];
+                    RawComment = Comment;
                 }
 
                 UserName.Trim();
@@ -786,7 +788,11 @@ namespace SyncRoomChatTool
                                                 else
                                                 {
                                                     //リンクじゃない。
-                                                    addLine = separator + CommentObj.Comment;
+                                                    //todo: ここだな。生ログは、ary[]には入ってるが…そうすると、コロンを大きくが難しいか？
+                                                    //aryの最後がコメント扱いで、それ以外が名前扱いになるか。
+                                                    //名前はもう出してるので、CommentObject.Commentじゃなく、newComment にするか。
+                                                    //addLine = separator + CommentObj.Comment;
+                                                    addLine = separator + CommentObj.RawComment;
                                                 }
 
                                                 UpdateRichText(addLine);
@@ -863,17 +869,14 @@ namespace SyncRoomChatTool
                 {
                     if (App.Default.useTwitcasting) {
                         GetTwicasComment();
+#if DEBUG
+                        Debug.Print($"Twicas API Done. {DateTime.Now}");
+#endif
                     }
 
                     //約1秒に1回を強制。ちょっとマージン付けた。ツイキャスの仕様で、
                     //1分間に60以上リクエストするのはダメなので。
-#if DEBUG
-                    Debug.Print($"Twicas API Wait {DateTime.Now}");
-#endif
                     await Task.Delay(1010);
-#if DEBUG
-                    Debug.Print($"TimerTest {DateTime.Now}");
-#endif
                 }
             });
         }
