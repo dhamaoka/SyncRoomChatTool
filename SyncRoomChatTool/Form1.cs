@@ -273,18 +273,17 @@ namespace SyncRoomChatTool
         static readonly List<Speaker> UserTable = new List<Speaker> { };
         static readonly List<Speaker> StyleDef = new List<Speaker> { };
 
-        static readonly BlockingCollection<CommentText> CommentQue = new BlockingCollection<CommentText>();
+        static readonly BlockingCollection<CommentObject> CommentQue = new BlockingCollection<CommentObject>();
 
-        private class CommentText
+        private class CommentObject
         {
             static readonly int[] RandTable = new int[] { 0, 1, 2, 3, 6, 7, 8, 9, 10, 14, 16, 20, 23, 29 };
             static readonly string BlankLineUserName = "改行コピペ野郎";
 
-            public bool IsBlank;
             public bool IsLink;
             public bool ChimeFlg = false;
             public bool SpeechFlg = true;
-            public int Lang;
+            public int Lang = 0;
             public int StyleId = 2;
             public string UserName { get; set; }
             public string Comment { get; set; }
@@ -292,15 +291,13 @@ namespace SyncRoomChatTool
             public string UriString { get; set; }
             public DateTime LastCommentTime;
             public DateTime NowCommentTime;
-            public bool CanSpeech;
+            public bool CanSpeech = false;
 
-            public CommentText(string newComment, string lastComment, bool appCanSpeech)
+            public CommentObject(string newComment, string lastComment, bool appCanSpeech)
             {
                 //末尾がコロンかどうか。空行チェック。
-                IsBlank = (newComment.Substring(newComment.Length - 1, 1) == ":");
-                if (IsBlank)
+                if (newComment.Substring(newComment.Length - 1, 1) == ":")
                 {
-                    CanSpeech = false;
                     return;
                 }
 
@@ -331,7 +328,7 @@ namespace SyncRoomChatTool
                 IsLink = (match.Success);
                 if (IsLink)
                 {
-                    //todo:リンクが貼られたときはここで発声させてるのよなぁ。これもどうかなぁ。一元化するか…
+                    //リンクが貼られたときはここで発声させてる。
                     UserName = ary[ary.Length - (int)CommentDivider.LinkedUserName];
                     Comment = "リンクが張られました。";
                     Lang = 0;
@@ -339,14 +336,13 @@ namespace SyncRoomChatTool
                     {
                         if (File.Exists(App.Default.linkWaveFilePath))
                         {
+                            //固定ファイルが設定されている場合は直再生。
                             SoundPlayer player = new SoundPlayer(App.Default.linkWaveFilePath);
-                            //非同期再生する
-                            player.Play();
+                            //同期再生する。非同期から同期にした。
+                            player.PlaySync();
                         }
                         else
                         {
-                            //SpeechSynthe(this);
-                            CanSpeech = true;
                             CommentQue.TryAdd(this);
                         }
                     }
@@ -367,18 +363,13 @@ namespace SyncRoomChatTool
                     }
 
                     LastURL = UriString;
-                    CanSpeech = false;
                     return;
                 }
 
-                if (appCanSpeech == false)
-                {
-                    CanSpeech = false;
-                    return;
-                }
+                if (appCanSpeech == false) { return; }
 
                 //絵文字っぽいのが入っているかどうかのチェック。半角スペースに置換
-                var newCommentChar = newComment.ToCharArray();
+                var newCommentChar = Comment.ToCharArray();
                 for (int i = 0; i < newCommentChar.Length; i++)
                 {
                     switch (char.GetUnicodeCategory(newCommentChar[i]))
@@ -394,28 +385,22 @@ namespace SyncRoomChatTool
                             break;
                     }
                 }
-                newComment = new string(newCommentChar);
-                newComment.Trim();
+
+                Comment = new string(newCommentChar);
+                Comment.Trim();
 
                 //ωのチェック。これうざいので。
-                match = Regex.Match(newComment, @"[ω]");
+                match = Regex.Match(Comment, @"[ω]");
                 if (match.Success)
                 {
-                    newComment.Replace("ω", "");
+                    Comment.Replace("ω", "");
                 }
 
-                if (string.IsNullOrEmpty(newComment))
-                {
-                    return;
-                }
+                if (string.IsNullOrEmpty(Comment)) { return; }
 
                 //英数のみかのチェックというか、指定のワードが入ってるかどうか（主に日本語）
                 match = Regex.Match(Comment, "[ぁ-んァ-ヶｱ-ﾝﾞﾟ一-龠！-／：-＠［-｀｛-～、-〜”’・]");
-                if (match.Success)
-                {
-                    Lang = 0;
-                }
-                else
+                if (match.Success == false)
                 {
                     Lang = 1;
                 }
@@ -487,12 +472,17 @@ namespace SyncRoomChatTool
                     break;
                 }
 
+                //名前にツイキャスユーザが入っている場合。
+                if (Regex.Match(newComment, "ツイキャスユーザ").Success)
+                {
+                    StyleId = 8;
+                }
+
                 //8888対応
                 match = Regex.Match(Comment, @"(８|8){2,}", RegexOptions.IgnoreCase);
                 if (match.Success)
                 {
                     Comment = Comment.Replace(match.ToString(), "、パチパチパチ");
-                    Lang = 0;
                 }
 
                 //8888対応
@@ -500,7 +490,6 @@ namespace SyncRoomChatTool
                 if (match.Success)
                 {
                     Comment = Comment.Replace(match.ToString(), "、パチ");
-                    Lang = 0;
                 }
 
                 //ｗｗｗ対応
@@ -508,7 +497,6 @@ namespace SyncRoomChatTool
                 if (match.Success)
                 {
                     Comment = Comment.Replace(match.ToString(), "、ふふっ");
-                    Lang = 0;
                 }
 
                 //行末のｗｗｗ対応
@@ -516,7 +504,6 @@ namespace SyncRoomChatTool
                 if (match.Success)
                 {
                     Comment = Comment.Replace(match.ToString(), "、ふふっ");
-                    Lang = 0;
                 }
 
                 //文字数制限
@@ -527,17 +514,9 @@ namespace SyncRoomChatTool
                     Comment += cutText[Lang];
                 }
 
-                //前回コメント＝空＝初回起動時
-                if (string.IsNullOrEmpty(lastComment))
-                {
-                    CanSpeech = false;
-                    return;
-                }
-
                 //前回コメントとの比較
                 if (lastComment == newComment)
                 {
-                    CanSpeech = false;
                     return;
                 }
                 CanSpeech = true;
@@ -621,12 +600,6 @@ namespace SyncRoomChatTool
             }
 
             App.Default.Save();
-
-            //todo:ロードでやってるのが良くないのか、起動してなんぞ動かんと表示が変わらん問題。
-            this.Size = App.Default.windowSize;
-            this.Refresh();
-            richTextBox1.Refresh();
-            this.Activate();
 
             //VOICEVOXエンジンの起動チェック
             TargetProcess tp = new TargetProcess("run");
@@ -758,7 +731,7 @@ namespace SyncRoomChatTool
 
                                         newComment = ary[ary.Count() - 1];
 
-                                        CommentText CommentObj = new CommentText(newComment, oldComment, App.Default.canSpeech)
+                                        CommentObject CommentObj = new CommentObject(newComment, oldComment, App.Default.canSpeech)
                                         {
                                             LastCommentTime = lastDt,
                                             NowCommentTime = newDt
@@ -788,10 +761,7 @@ namespace SyncRoomChatTool
                                                 else
                                                 {
                                                     //リンクじゃない。
-                                                    //todo: ここだな。生ログは、ary[]には入ってるが…そうすると、コロンを大きくが難しいか？
-                                                    //aryの最後がコメント扱いで、それ以外が名前扱いになるか。
-                                                    //名前はもう出してるので、CommentObject.Commentじゃなく、newComment にするか。
-                                                    //addLine = separator + CommentObj.Comment;
+                                                    //名前はもう出してるので、CommentObject.Commentじゃなく、RawComment を新たに作成。
                                                     addLine = separator + CommentObj.RawComment;
                                                 }
 
@@ -1048,7 +1018,7 @@ namespace SyncRoomChatTool
 
             DateTime lastDt = DateTime.Now;
             DateTime newDt = DateTime.Now;
-            CommentText CommentObj = new CommentText(NowTwitCastingComment, LastTwitCastingComment, App.Default.useTwitcasting)
+            CommentObject CommentObj = new CommentObject(NowTwitCastingComment, LastTwitCastingComment, App.Default.useTwitcasting)
             {
                 LastCommentTime = lastDt,
                 NowCommentTime = newDt
@@ -1071,7 +1041,7 @@ namespace SyncRoomChatTool
                 while (true)
                 {
                     if (CommentQue.Count < 1) { continue; }
-                    CommentQue.TryTake(out CommentText commentObj, 50);
+                    CommentQue.TryTake(out CommentObject commentObj, 50);
                     if (commentObj == null)
                     {
                         continue;
@@ -1102,7 +1072,7 @@ namespace SyncRoomChatTool
 
                     if (App.Default.UseVoiceVox == true && commentObj.Lang == 0)
                     {
-                        SpeechVOICEVOX(commentObj);
+                        SpeechByVOICEVOX(commentObj);
                         continue;
                     }
 
@@ -1125,7 +1095,7 @@ namespace SyncRoomChatTool
             });
         }
 
-        private static void SpeechVOICEVOX(CommentText commentObj)
+        private static void SpeechByVOICEVOX(CommentObject commentObj)
         {
             string baseUrl = App.Default.VoiceVoxAddress;
             string url;
@@ -1169,7 +1139,7 @@ namespace SyncRoomChatTool
                 if (ret.StatusCode.Equals(HttpStatusCode.OK))
                 {
                     SoundPlayer player = new SoundPlayer(wavFile);
-                    //非同期再生する
+                    //再生する
                     player.PlaySync();
                 }
             }
@@ -1356,6 +1326,16 @@ namespace SyncRoomChatTool
         {
             App.Default.OpenLink = MenuOpenLink.Checked;
             App.Default.Save();
+        }
+
+        private void Form1_Shown(object sender, EventArgs e)
+        {
+            //todo:ロードでやってるのが良くないのか、起動してなんぞ動かんと表示が変わらん問題。Shownに移したが変わらん。
+            //何故かチャットウィンドウ開いたら、反応するのよねぇ。
+            richTextBox1.Refresh();
+            this.Size = App.Default.windowSize;
+            this.Refresh();
+            textBox1.Focus();
         }
     }
 }

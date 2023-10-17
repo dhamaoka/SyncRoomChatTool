@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -116,6 +117,12 @@ namespace SyncRoomChatTool
 #endif
                 }
             }
+            catch (SocketException)
+            {
+                //UNDONE: 暫定処置だな。サーバがレスポンスを返さなかった時。再現難しいなぁ。
+                return null;
+            }
+
             catch (HttpRequestException)
             {
                 // UNDONE: 通信失敗のエラー処理
