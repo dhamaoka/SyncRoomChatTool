@@ -213,31 +213,31 @@
             this.toolStripStatusLabel2,
             this.toolStripStatusLabel3,
             this.toolStripStatusLabel4});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 560);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 558);
             this.statusStrip1.Margin = new System.Windows.Forms.Padding(3);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(940, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(940, 24);
             this.statusStrip1.TabIndex = 1;
             // 
             // toolStripStatusLabel1
             // 
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(0, 16);
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(0, 18);
             // 
             // toolStripStatusLabel2
             // 
             this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            this.toolStripStatusLabel2.Size = new System.Drawing.Size(0, 16);
+            this.toolStripStatusLabel2.Size = new System.Drawing.Size(0, 18);
             // 
             // toolStripStatusLabel3
             // 
             this.toolStripStatusLabel3.Name = "toolStripStatusLabel3";
-            this.toolStripStatusLabel3.Size = new System.Drawing.Size(0, 16);
+            this.toolStripStatusLabel3.Size = new System.Drawing.Size(0, 18);
             // 
             // toolStripStatusLabel4
             // 
             this.toolStripStatusLabel4.Name = "toolStripStatusLabel4";
-            this.toolStripStatusLabel4.Size = new System.Drawing.Size(0, 16);
+            this.toolStripStatusLabel4.Size = new System.Drawing.Size(0, 18);
             // 
             // splitContainer1
             // 
@@ -260,8 +260,8 @@
             this.splitContainer1.Panel2.Margin = new System.Windows.Forms.Padding(3);
             this.splitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(5);
             this.splitContainer1.Panel2MinSize = 37;
-            this.splitContainer1.Size = new System.Drawing.Size(940, 529);
-            this.splitContainer1.SplitterDistance = 488;
+            this.splitContainer1.Size = new System.Drawing.Size(940, 527);
+            this.splitContainer1.SplitterDistance = 489;
             this.splitContainer1.SplitterWidth = 1;
             this.splitContainer1.TabIndex = 6;
             // 
@@ -278,7 +278,7 @@
             this.richTextBox1.ReadOnly = true;
             this.richTextBox1.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
             this.richTextBox1.ShortcutsEnabled = false;
-            this.richTextBox1.Size = new System.Drawing.Size(932, 480);
+            this.richTextBox1.Size = new System.Drawing.Size(932, 481);
             this.richTextBox1.TabIndex = 4;
             this.richTextBox1.Text = resources.GetString("richTextBox1.Text");
             this.richTextBox1.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.RichTextBox1_LinkClicked);
