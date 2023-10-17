@@ -951,6 +951,8 @@ namespace SyncRoomChatTool
                 baseUrl += "/";
             }
 
+            if (TwiCasUser == null) { return; } 
+
             if (string.IsNullOrEmpty(TwiCasUser.LastMovieId)) { return; }
 
             // Movieが生きてるか死んでるか。
