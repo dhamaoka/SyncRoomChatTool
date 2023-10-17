@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -22,6 +23,87 @@ namespace SyncRoomChatTool
             Comment = 1,
             UserName = 2,
             LinkedUserName = 3
+        }
+
+        //スレッド内でのコントロール制御用Delegete達
+        delegate void DelegeteUpdateStatusStrip(int idx, string text);
+        delegate void DelegeteUpdateRichText(string text);
+        delegate bool DelegeteIsLogEmpty();
+
+        /// <summary>
+        /// 別スレッドからRichTextBoxが空かどうかの判定用のはずだが。ダメな気もする。
+        /// </summary>
+        /// <returns></returns>
+        private bool IsLogEmpty()
+        {
+            try
+            {
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new DelegeteIsLogEmpty(this.IsLogEmpty));
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(richTextBox1.Text))
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch
+            {
+                Application.Exit();
+            };
+
+            return false;
+        }
+
+        /// <summary>
+        /// 別スレッドからRichTextBoxを更新する。
+        /// </summary>
+        /// <param name="text"></param>
+        private void UpdateRichText(string text)
+        {
+            try
+            {
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new DelegeteUpdateRichText(this.UpdateRichText), new object[] { text });
+                }
+                else
+                {
+                    richTextBox1.AppendText(text);
+                }
+            }
+            catch
+            {
+                Application.Exit();
+            };
+        }
+
+        /// <summary>
+        /// 別スレッドからステータスストリップを更新する。
+        /// </summary>
+        /// <param name="idx"></param>
+        /// <param name="text"></param>
+        private void UpdateStatusStrip(int idx, string text)
+        {
+            try
+            {
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new DelegeteUpdateStatusStrip(this.UpdateStatusStrip), new object[] { idx, text });
+                }
+                else
+                {
+                    statusStrip1.Items[idx].Text = text;
+                }
+
+            }
+            catch
+            {
+                Application.Exit();
+            };
         }
 
         //audio_queryした後に帰ってくるレスポンスを編集するためのクラス群。
@@ -185,6 +267,14 @@ namespace SyncRoomChatTool
 
         static readonly List<Speaker> VoiceLists = new List<Speaker> { };
 
+        private static readonly UIAutomationLib ui = new UIAutomationLib { };
+        private static readonly string voiceVoxDefaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs\\VOICEVOX\\run.exe");
+
+        static readonly List<Speaker> UserTable = new List<Speaker> { };
+        static readonly List<Speaker> StyleDef = new List<Speaker> { };
+
+        static readonly BlockingCollection<CommentText> CommentQue = new BlockingCollection<CommentText>();
+
         private class CommentText
         {
             static readonly int[] RandTable = new int[] { 0, 1, 2, 3, 6, 7, 8, 9, 10, 14, 16, 20, 23, 29 };
@@ -239,6 +329,7 @@ namespace SyncRoomChatTool
                 IsLink = (match.Success);
                 if (IsLink)
                 {
+                    //todo:リンクが貼られたときはここで発声させてるのよなぁ。これもどうかなぁ。一元化するか…
                     UserName = ary[ary.Length - (int)CommentDivider.LinkedUserName];
                     Comment = "リンクが張られました。";
                     Lang = 0;
@@ -252,18 +343,21 @@ namespace SyncRoomChatTool
                         }
                         else
                         {
-                            SpeechSynthe(this);
+                            //SpeechSynthe(this);
+                            CanSpeech = true;
+                            CommentQue.TryAdd(this);
                         }
                     }
 
+                    //自動リンクオープン部分。
                     UriString = newComment.Substring(match.Index);
                     Uri u = new Uri(UriString);
 
-                    if (UriString != LastURL)
+                    if (App.Default.OpenLink)
                     {
-                        if (App.Default.OpenLink)
-                        {
-                            if (u.IsAbsoluteUri)
+                        if (UriString != LastURL)
+                            {
+                                if (u.IsAbsoluteUri)
                             {
                                 Process.Start(UriString);
                             }
@@ -448,20 +542,41 @@ namespace SyncRoomChatTool
             }
         }
 
-        private static readonly UIAutomationLib ui = new UIAutomationLib{ };
-        private static readonly string voiceVoxDefaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs\\VOICEVOX\\run.exe");
-
-        static readonly List<Speaker> UserTable = new List<Speaker> { };
-        static readonly List<Speaker> StyleDef = new List<Speaker> { };
-        static readonly double Volueme = 0;
+        private static void UpdateUserOption(bool existsFlg, string UserName, int StyleId, bool ChatFlg, bool SpeechFlg)
+        {
+            if (existsFlg)
+            {
+                foreach (var item in UserTable.Where(x => x.UserName == UserName))
+                {
+                    item.StyleId = StyleId;
+                    item.UserName = UserName;
+                    item.ChimeFlg = ChatFlg;
+                    item.SpeechFlg = SpeechFlg;
+                }
+            }
+            else
+            {
+                Speaker addLine = new Speaker
+                {
+                    StyleId = StyleId,
+                    UserName = UserName,
+                    ChimeFlg = ChatFlg,
+                    SpeechFlg = SpeechFlg
+                };
+                UserTable.Add(addLine);
+            }
+        }
 
         private async void Form1_Load(object sender, EventArgs e)
         {
+            //アセンブリーからバージョン取得
             var assembly = Assembly.GetExecutingAssembly();
             var fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
 
+            //バージョンの表示
             this.Text += $" {fileVersionInfo.ProductVersion}";
 
+            //各種オプションの取得
             MenuEnableTwitcasting.Checked = App.Default.useTwitcasting;
             MenuEnebleSpeech.Checked = App.Default.canSpeech;
             MenuUseVoiceVox.Checked = App.Default.UseVoiceVox;
@@ -505,11 +620,13 @@ namespace SyncRoomChatTool
 
             App.Default.Save();
 
+            //todo:ロードでやってるのが良くないのか、起動してなんぞ動かんと表示が変わらん問題。
             this.Size = App.Default.windowSize;
             this.Refresh();
             richTextBox1.Refresh();
             this.Activate();
 
+            //VOICEVOXエンジンの起動チェック
             TargetProcess tp = new TargetProcess("run");
             if (!string.IsNullOrEmpty(App.Default.VoiceVoxPath))
             {
@@ -546,7 +663,7 @@ namespace SyncRoomChatTool
                 var ret = client.Get();
                 if (ret != null)
                 {
-                    //Jsonのデシリアライズ。StyleIdの一覧を作る。
+                    //Jsonのデシリアライズ。VOICEVOXのStyleIdの一覧を作る。
                     List<SpeakerFromAPI> VoiceVoxSpeakers = JsonConvert.DeserializeObject<List<SpeakerFromAPI>>(ret.ToString());
 
                     foreach (SpeakerFromAPI speaker in VoiceVoxSpeakers)
@@ -575,211 +692,240 @@ namespace SyncRoomChatTool
                 }
             }
 
-            ShowUserInfo();
-            _ = CheckProcess("SYNCROOM", this.statusStrip1, this.richTextBox1);
+            //メインループを実行。
+            _ = TaskGetChat("SYNCROOM");
+
+            //ツイキャス配信の確認。5秒ごとに更新で固定。
+            _ = TaskGetUserInfo();
+
+            //ツイキャスコメント取得。1010ミリ秒間隔で取得で固定。
+            _ = TaskGetTwicasCommen();
+
+            //キューからの取得と音声合成。キューがなくなるまで合成して発話する。
+            _ = TaskTryTakeAndSpeech();
         }
 
-        static async Task CheckProcess(string ProcessName, StatusStrip ststp, RichTextBox logView)
+        async Task TaskGetChat(string ProcessName)
         {
-            /*
-             * 別タスクに、フォームのコントロールを渡して内容を変更するのは、お作法的にはダメなんだろうなぁ…と思いつつ。
-             */
-
             //初期化。前回取得のログ全部と、最後のコメントの保管場所
             string oldLog = "";
             string oldComment = "";
             DateTime lastDt = DateTime.Now;
             DateTime newDt;
-            int counter = 0;
-            logView.Text = "";
-
-            while (true)
+            UpdateRichText("");
+            await Task.Run(async () =>
             {
-                if (App.Default.useTwitcasting)
+                while (true)
                 {
-                    // だせぇ。最低500ミリ秒だから、最短でも1分に1回はユーザー情報取りに行く仕掛け。だせぇ。
-                    counter++;
-                    if (counter > 960)
+                    TargetProcess targetProc = new TargetProcess(ProcessName);
+
+                    string toolMessage = "";
+
+                    if (targetProc.IsAlive)
                     {
-                        counter = 0;
-                    }
-                    if ((counter % 120) == 0)
-                    {
-                        UserInfo();
-                    }
-
-                    // だせぇ。最低500ミリ秒だから、最短でも1.5秒に1回はコメント情報取りに行く仕掛け。だせぇ。
-                    if ((counter % 3) == 0)
-                    {
-                        CommentInfo();
-#if DEBUG
-                        //Debug.WriteLine(DateTime.Now.ToString());
-#endif
-                    }
-                }
-
-                TargetProcess targetProc = new TargetProcess(ProcessName);
-
-                string toolMessage;
-
-                if (targetProc.IsAlive)
-                {
-                    toolMessage = "は起動されています。";
-                    try
-                    {
-                        IntPtr chatwHnd = ui.FindHWndByCaptionAndProcessID("チャット", targetProc.Id);
-
-                        if (chatwHnd != IntPtr.Zero)
+                        toolMessage = "は起動されています。";
+                        try
                         {
-                            ststp.Items[1].Text = "チャットログ監視中。";
-                            AutomationElement chatWindow = AutomationElement.FromHandle(chatwHnd);
+                            IntPtr chatwHnd = ui.FindHWndByCaptionAndProcessID("チャット", targetProc.Id);
 
-                            AutomationElement chatLog = ui.GetEditElement(chatWindow, "チャットログ");
-                            ValuePattern vp = ui.GetValuePattern(chatLog);
-
-                            if (vp == null) { continue; }
-
-                            Match match;
-                            match = Regex.Match(chatLog.Current.Name, "^チャットログ");
-                            if (match.Success)
+                            if (chatwHnd != IntPtr.Zero)
                             {
-                                //チャットログに変化があった場合。
-                                string newComment = "";
-                                newDt = DateTime.Now;
+                                UpdateStatusStrip(1, "チャットログ監視中。");
 
-                                if (oldLog != vp.Current.Value)
+                                AutomationElement chatWindow = AutomationElement.FromHandle(chatwHnd);
+
+                                AutomationElement chatLog = ui.GetEditElement(chatWindow, "チャットログ");
+                                ValuePattern vp = ui.GetValuePattern(chatLog);
+
+                                if (vp == null) { continue; }
+
+                                Match match;
+                                match = Regex.Match(chatLog.Current.Name, "^チャットログ");
+                                if (match.Success)
                                 {
-                                    oldLog = vp.Current.Value;
+                                    //チャットログに変化があった場合。
+                                    string newComment = "";
+                                    newDt = DateTime.Now;
 
-                                    //改行で区切って、一番最後を最新コメントとする。
-                                    string[] ary = vp.Current.Value.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
-
-                                    newComment = ary[ary.Count() - 1];
-
-                                    CommentText CommentObj = new CommentText(newComment, oldComment, App.Default.canSpeech)
+                                    if (oldLog != vp.Current.Value)
                                     {
-                                        LastCommentTime = lastDt,
-                                        NowCommentTime = newDt
-                                    };
+                                        oldLog = vp.Current.Value;
 
-                                    if (string.IsNullOrEmpty(CommentObj.Comment) == false)
-                                    {
-                                        //何かコメントあり。
-                                        if (string.IsNullOrEmpty(logView.Text) == false)
+                                        //改行で区切って、一番最後を最新コメントとする。
+                                        string[] ary = vp.Current.Value.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+                                        newComment = ary[ary.Count() - 1];
+
+                                        CommentText CommentObj = new CommentText(newComment, oldComment, App.Default.canSpeech)
                                         {
-                                            //かつ、リッチテキストボックスが空じゃない＝改行する。
-                                            logView.AppendText(Environment.NewLine);
-                                        }
+                                            LastCommentTime = lastDt,
+                                            NowCommentTime = newDt
+                                        };
 
-                                        string addLine = CommentObj.UserName;
-                                        if (string.IsNullOrEmpty(addLine) == false)
+                                        if (string.IsNullOrEmpty(CommentObj.Comment) == false)
                                         {
-                                            logView.AppendText(addLine);
-
-                                            string separator = " ： ";
-                                            if (CommentObj.IsLink)
+                                            //何かコメントあり。
+                                            if (IsLogEmpty() == false)
                                             {
-                                                //リンクだった時の処理
-                                                logView.AppendText(Environment.NewLine);
-                                                addLine = " \t" + CommentObj.UriString;
-                                            }
-                                            else
-                                            {
-                                                //リンクじゃない。
-                                                addLine = separator + CommentObj.Comment;
+                                                //かつ、リッチテキストボックスが空じゃない＝改行する。
+                                                UpdateRichText(Environment.NewLine);
                                             }
 
-                                            logView.AppendText(addLine);
+                                            string addLine = CommentObj.UserName;
+                                            if (string.IsNullOrEmpty(addLine) == false)
+                                            {
+                                                UpdateRichText(addLine);
+
+                                                string separator = " ： ";
+                                                if (CommentObj.IsLink)
+                                                {
+                                                    //リンクだった時の処理
+                                                    UpdateRichText(Environment.NewLine);
+                                                    addLine = " \t" + CommentObj.UriString;
+                                                }
+                                                else
+                                                {
+                                                    //リンクじゃない。
+                                                    addLine = separator + CommentObj.Comment;
+                                                }
+
+                                                UpdateRichText(addLine);
+                                            }
                                         }
-                                    }
-                                    else
-                                    {
-                                        //コメントなし。改行のみ。
-                                        CommentObj.CanSpeech = false;
-                                    }
-
-                                    if (CommentObj.CanSpeech)
-                                    {
-                                        //音声用の別処理をぶっ込む。
-                                        SpeechSynthe(CommentObj);
-                                    }
-
-                                    oldComment = newComment;
-                                    lastDt = newDt;
-
-                                    bool existsFlg = VoiceLists.Exists(x => x.StyleId == CommentObj.StyleId);
-                                    if (existsFlg)
-                                    {
-                                        //VoiceListsから、StyleIdその他の取り出し。
-                                        foreach (var item in VoiceLists.Where(x => x.StyleId == CommentObj.StyleId))
+                                        else
                                         {
-                                            ststp.Items[3].Text = $"名前：{CommentObj.UserName} ボイス：[{item.StyleId}]{item.UserName}";
+                                            //コメントなし。改行のみ。
+                                            CommentObj.CanSpeech = false;
+                                        }
+
+                                        if (CommentObj.CanSpeech)
+                                        {
+                                            //キューにぶっ込む。
+                                            CommentQue.TryAdd(CommentObj);
+                                        }
+
+                                        oldComment = newComment;
+                                        lastDt = newDt;
+
+                                        bool existsFlg = VoiceLists.Exists(x => x.StyleId == CommentObj.StyleId);
+                                        if (existsFlg)
+                                        {
+                                            //VoiceListsから、StyleIdその他の取り出し。
+                                            foreach (var item in VoiceLists.Where(x => x.StyleId == CommentObj.StyleId))
+                                            {
+                                                UpdateStatusStrip(3, $"名前：{CommentObj.UserName} ボイス：[{item.StyleId}]{item.UserName}");
+                                            }
                                         }
                                     }
                                 }
                             }
+                            else
+                            {
+                                UpdateStatusStrip(1, "チャットログ待機中…");
+                            }
                         }
-                        else
+                        catch (ArgumentException agex)
                         {
-                            ststp.Items[1].Text = "チャットログ待機中…";
+                            //hwnd が見つからなかった系のエラーは握りつぶす系。
+                            //SyncRoomの起動待ち状態で、起動直後で転ける様子。
+                            UpdateStatusStrip(1, $"{agex.Message}");
+                        }
+                        catch (Exception ex)
+                        {
+                            string errMsg = $"\r\nエラーが発生しています。{ex.Message}";
+                            UpdateRichText(errMsg);
+                            SpeechSynthesizer synth = new SpeechSynthesizer { };
+                            synth.SelectVoice("Microsoft Haruka Desktop");
+                            synth.SpeakAsync(errMsg);
+                            await Task.Delay(3000);
+                            Application.Exit();
                         }
                     }
-                    catch (ArgumentException agex)
+                    else
                     {
-                        //hwnd が見つからなかった系のエラーは握りつぶす系。
-                        //SyncRoomの起動待ち状態で、起動直後で転ける様子。
-                        ststp.Items[1].Text = $"{agex.Message}";
+                        toolMessage = "は起動されていません。";
+                        UpdateStatusStrip(1, "チャットウィンドウなし。");
+                        oldLog = "";
+                        oldComment = "";
                     }
-                    catch (Exception ex)
-                    {
-                        string errMsg = $"\r\nエラーが発生しています。{ex.Message}";
-                        logView.Text += errMsg;
-                        SpeechSynthesizer synth = new SpeechSynthesizer{ };
-                        synth.SelectVoice("Microsoft Haruka Desktop");
-                        synth.SpeakAsync(errMsg);
-                        await Task.Delay(3000);
-                        Application.Exit();
-                    }
-                }
-                else
-                {
-                    toolMessage = "は起動されていません。";
-                    ststp.Items[1].Text = "チャットウィンドウなし。";
-                    oldLog = "";
-                    oldComment = "";
-                }
-                ststp.Items[0].Text = ProcessName + toolMessage;
+                    UpdateStatusStrip(0, ProcessName + toolMessage);
 
-                ststp.Refresh();
-                await Task.Delay((int)App.Default.waitTiming);
+                    await Task.Delay((int)App.Default.waitTiming);
+                }
             }
+            );
+        }
+
+        async Task TaskGetTwicasCommen()
+        {
+            await Task.Run(async ()=> {
+                while (true)
+                {
+                    if (App.Default.useTwitcasting) {
+                        GetTwicasComment();
+                    }
+
+                    //約1秒に1回を強制。ちょっとマージン付けた。ツイキャスの仕様で、
+                    //1分間に60以上リクエストするのはダメなので。
+#if DEBUG
+                    Debug.Print($"Twicas API Wait {DateTime.Now}");
+#endif
+                    await Task.Delay(1010);
+#if DEBUG
+                    Debug.Print($"TimerTest {DateTime.Now}");
+#endif
+                }
+            });
         }
 
         /// <summary>
-        /// ツイキャスユーザ情報取得。ロード時とツイキャス設定画面から帰ってきた時、最短1分ごとに実行。
+        /// ツイキャスの配信者情報取得
         /// </summary>
-        static void UserInfo()
+        async Task TaskGetUserInfo()
         {
+            await Task.Run(async () => {
+                while (true)
+                {
+                    UpdateStatusStrip(2, "");
 
-            if (App.Default.useTwitcasting == false)
-            {
-                return;
-            }
+                    if (App.Default.useTwitcasting)
+                    {
+                        //ユーザ情報取得のリクエストを投げる
+                        GetTwicasUserInfo();
 
-            if (string.IsNullOrEmpty(App.Default.AccessToken))
-            {
-                return;
-            }
+                        if (TwiCasUser != null)
+                        {
+                            string castingStatus = "未配信";
+                            if (TwiCasUser.IsAlive)
+                            {
+                                castingStatus = "配信中";
+                            }
+                            UpdateStatusStrip(2, $"ツイキャスID = {TwiCasUser.ScreenId}（{TwiCasUser.Name}）{castingStatus}");
+                        }
+                        else
+                        {
+                            UpdateStatusStrip(2, "ツイキャスユーザ情報の取得に失敗しました。");
+                        }
+                    }
 
-            if (string.IsNullOrEmpty(App.Default.twitcastUserName))
-            {
-                return;
-            }
+                    //ツイキャスユーザの更新は5秒で固定。
+                    await Task.Delay(5000);
+                }
+            });
+        }
 
-            if (string.IsNullOrEmpty(App.Default.twitCastingBaseAddress))
-            {
-                return;
-            }
+        /// <summary>
+        /// ツイキャスユーザ情報取得。
+        /// </summary>
+        private void GetTwicasUserInfo()
+        {
+            if (App.Default.useTwitcasting == false) { return; }
+
+            if (string.IsNullOrEmpty(App.Default.AccessToken)) { return; }
+
+            if (string.IsNullOrEmpty(App.Default.twitcastUserName)) { return; }
+
+            if (string.IsNullOrEmpty(App.Default.twitCastingBaseAddress)) { return; }
 
             string baseUrl = App.Default.twitCastingBaseAddress;
 
@@ -811,27 +957,19 @@ namespace SyncRoomChatTool
         /// <summary>
         /// APIをどついてツイキャスのコメントをチェックする。
         /// </summary>
-        static void CommentInfo()
+        private void GetTwicasComment()
         {
+            //アプリ設定でツイキャス連携なしなら、3秒後ループする。
+            //ツイキャス連携のスタートが少々遅れたとしても問題なかろう。
             if (App.Default.useTwitcasting == false)
             {
+                Task.Delay(3000);
                 return;
             }
 
-            if (string.IsNullOrEmpty(App.Default.AccessToken))
-            {
-                return;
-            }
-
-            if (string.IsNullOrEmpty(App.Default.twitcastUserName))
-            {
-                return;
-            }
-
-            if (string.IsNullOrEmpty(App.Default.twitCastingBaseAddress))
-            {
-                return;
-            }
+            if (string.IsNullOrEmpty(App.Default.AccessToken)) { return; }
+            if (string.IsNullOrEmpty(App.Default.twitcastUserName)) { return; }
+            if (string.IsNullOrEmpty(App.Default.twitCastingBaseAddress)) { return; }
 
             string baseUrl = App.Default.twitCastingBaseAddress;
 
@@ -840,10 +978,7 @@ namespace SyncRoomChatTool
                 baseUrl += "/";
             }
 
-            if (string.IsNullOrEmpty(TwiCasUser.LastMovieId))
-            {
-                return;
-            }
+            if (string.IsNullOrEmpty(TwiCasUser.LastMovieId)) { return; }
 
             // Movieが生きてるか死んでるか。
 #if DEBUG == false
@@ -919,88 +1054,72 @@ namespace SyncRoomChatTool
             //空行でない & 連続同一コメントでないこと。
             if (CommentObj.CanSpeech)
             {
-                //音声用の別処理をぶっ込む。
-                SpeechSynthe(CommentObj);
+                //キューにぶっ込む。
+                CommentQue.TryAdd(CommentObj);
             }
 
             commentCounter = commentsJson.AllCount;
             LastTwitCastingComment = NowTwitCastingComment;
         }
 
-        private static void UpdateUserOption(bool existsFlg, string UserName, int StyleId, bool ChatFlg, bool SpeechFlg)
+        private static async Task TaskTryTakeAndSpeech()
         {
-            if (existsFlg)
-            {
-                foreach (var item in UserTable.Where(x => x.UserName == UserName))
+            await Task.Run(async () => {
+                while (true)
                 {
-                    item.StyleId = StyleId;
-                    item.UserName = UserName;
-                    item.ChimeFlg = ChatFlg;
-                    item.SpeechFlg = SpeechFlg;
+                    if (CommentQue.Count < 1) { continue; }
+                    CommentQue.TryTake(out CommentText commentObj, 50);
+                    if (commentObj == null)
+                    {
+                        continue;
+                    }
+
+                    //多分引っかからないとは思いつつ。
+                    if (string.IsNullOrEmpty(commentObj.Comment))
+                    {
+                        continue;
+                    }
+
+                    //メッセージ（情報）を鳴らす
+                    TimeSpan commentDiff = commentObj.NowCommentTime - commentObj.LastCommentTime;
+
+                    if (commentObj.ChimeFlg)
+                    {
+                        if (commentDiff.TotalSeconds > 5)
+                        {
+                            SystemSounds.Asterisk.Play();
+                            await Task.Delay(100);
+                        }
+                    }
+
+                    if (commentObj.SpeechFlg == false)
+                    {
+                        continue;
+                    }
+
+                    if (App.Default.UseVoiceVox == true && commentObj.Lang == 0)
+                    {
+                        SpeechVOICEVOX(commentObj);
+                        continue;
+                    }
+
+                    SpeechSynthesizer synth = new SpeechSynthesizer
+                    {
+                        Rate = -1
+                    };
+
+                    //lang == 0 日本語でしゃべる。VOICEVOXを使うかどうかで処理分岐。
+                    if (commentObj.Lang == 0)
+                    {
+                        synth.SelectVoice("Microsoft Haruka Desktop");
+                    }
+                    else
+                    {
+                        synth.SelectVoice("Microsoft Zira Desktop");
+                    }
+                    synth.Speak(commentObj.Comment);
                 }
-            }
-            else
-            {
-                Speaker addLine = new Speaker
-                {
-                    StyleId = StyleId,
-                    UserName = UserName,
-                    ChimeFlg = ChatFlg,
-                    SpeechFlg = SpeechFlg
-                };
-                UserTable.Add(addLine);
-            }
-        }
-
-        private static async void SpeechSynthe(CommentText commentObj)
-        {
-            //多分引っかからないとは思いつつ。
-            if (string.IsNullOrEmpty(commentObj.Comment))
-            {
-                return;
-            }
-
-            //メッセージ（情報）を鳴らす
-            TimeSpan commentDiff = commentObj.NowCommentTime - commentObj.LastCommentTime;
-
-            if (commentObj.ChimeFlg)
-            {
-                if (commentDiff.TotalSeconds > 5)
-                {
-                    SystemSounds.Asterisk.Play();
-                    await Task.Delay(100);
-                }
-            }
-
-            if (commentObj.SpeechFlg == false)
-            {
-                return;
-            }
-
-            if (App.Default.UseVoiceVox == true && commentObj.Lang == 0)
-            {
-                SpeechVOICEVOX(commentObj);
-                return;
-            }
-
-            SpeechSynthesizer synth = new SpeechSynthesizer
-            {
-                Rate = -1
-            };
-
-            //lang == 0 日本語でしゃべる。VOICEVOXを使うかどうかで処理分岐。
-            if (commentObj.Lang == 0)
-            {
-                synth.SelectVoice("Microsoft Haruka Desktop");
-            }
-            else
-            {
-                synth.SelectVoice("Microsoft Zira Desktop");
-            }
-#if DEBUG
-            //Debug.WriteLine(commentObj.Comment);
-#endif
-            synth.SpeakAsync(commentObj.Comment);
+            });
         }
 
         private static void SpeechVOICEVOX(CommentText commentObj)
@@ -1048,7 +1167,7 @@ namespace SyncRoomChatTool
                 {
                     SoundPlayer player = new SoundPlayer(wavFile);
                     //非同期再生する
-                    player.Play();
+                    player.PlaySync();
                 }
             }
         }
@@ -1093,13 +1212,19 @@ namespace SyncRoomChatTool
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
-            App.Default.zoomFacter = richTextBox1.ZoomFactor;
-            App.Default.logFont = richTextBox1.Font;
-            App.Default.windowSize = this.Size;
-            App.Default.useTwitcasting = MenuEnableTwitcasting.Checked;
-            App.Default.WindowTopMost = MenuWindowTopMost.Checked;
-            App.Default.OpenLink = MenuOpenLink.Checked;
-            App.Default.Save();
+            try
+            {
+                App.Default.zoomFacter = richTextBox1.ZoomFactor;
+                App.Default.logFont = richTextBox1.Font;
+                App.Default.windowSize = this.Size;
+                App.Default.useTwitcasting = MenuEnableTwitcasting.Checked;
+                App.Default.WindowTopMost = MenuWindowTopMost.Checked;
+                App.Default.OpenLink = MenuOpenLink.Checked;
+                App.Default.Save();
+            }
+            catch { 
+                Application.Exit();
+            }
         }
 
         private void RichTextBox1_TextChanged(object sender, EventArgs e)
@@ -1137,37 +1262,12 @@ namespace SyncRoomChatTool
                 App.Default.readName = twitCasting.ReadName;
                 App.Default.Save();
             }
-            ShowUserInfo();
         }
 
         private void MenuEnableTwitcasting_Click(object sender, EventArgs e)
         {
             App.Default.useTwitcasting = MenuEnableTwitcasting.Checked;
-            ShowUserInfo();
             App.Default.Save();
-        }
-
-        private void ShowUserInfo()
-        {
-            toolStripStatusLabel3.Text = "";
-
-            if (App.Default.useTwitcasting)
-            {
-                UserInfo();
-                if (TwiCasUser != null)
-                {
-                    string castingStatus = "未配信";
-                    if (TwiCasUser.IsAlive)
-                    {
-                        castingStatus = "配信中";
-                    }
-                    toolStripStatusLabel3.Text = $"ツイキャスID = {TwiCasUser.ScreenId}（{TwiCasUser.Name}）{castingStatus}";
-                }
-                else
-                {
-                    toolStripStatusLabel3.Text = "ツイキャスユーザ情報の取得に失敗しました。";
-                }
-            }
         }
 
         private void MenuWindowTopMost_Click(object sender, EventArgs e)

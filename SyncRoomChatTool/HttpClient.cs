@@ -83,7 +83,7 @@ namespace SyncRoomChatTool
             HttpRequestMessage request = this.CreateRequest(HttpMethod.Get, requestEndPoint);
 
             string resBodyStr;
-            HttpStatusCode resStatusCoode = HttpStatusCode.NotFound;
+            HttpStatusCode resStatusCode = HttpStatusCode.NotFound;
             Task<HttpResponseMessage> response;
             // 通信実行。メンバ変数でhttpClientを持っているので、using(～)で囲いません。囲うと通信後にオブジェクトが破棄されます。
             // 引数にrequestを取る場合はGetAsyncやPostAsyncでなくSendAsyncメソッドになります。
@@ -105,9 +105,10 @@ namespace SyncRoomChatTool
                         response = httpClient.SendAsync(request);
                         break;
                 }
-                //response.Wait(1000);
+
                 resBodyStr = response.Result.Content.ReadAsStringAsync().Result;
-                resStatusCoode = response.Result.StatusCode;
+
+                resStatusCode = response.Result.StatusCode;
                 if (reqType == RequestType.commentInfo)
                 {
 #if DEBUG
@@ -129,7 +130,7 @@ namespace SyncRoomChatTool
             }
 
 
-            if (!resStatusCoode.Equals(HttpStatusCode.OK))
+            if (!resStatusCode.Equals(HttpStatusCode.OK))
             {
                 // UNDONE: レスポンスが200 OK以外の場合のエラー処理
                 return null;
