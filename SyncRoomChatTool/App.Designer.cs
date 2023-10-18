@@ -250,5 +250,17 @@ namespace SyncRoomChatTool {
                 this["Volume"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool PlayAsync {
+            get {
+                return ((bool)(this["PlayAsync"]));
+            }
+            set {
+                this["PlayAsync"] = value;
+            }
+        }
     }
 }

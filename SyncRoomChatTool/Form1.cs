@@ -181,6 +181,7 @@ namespace SyncRoomChatTool
         private static string LastURL = "";
 
         private static User TwiCasUser = new User{ };
+        private AutoCompleteStringCollection autoCompList;
 
         public Form1()
         {
@@ -263,6 +264,7 @@ namespace SyncRoomChatTool
             public string UserName { get; set; }
             public bool ChimeFlg { get; set; }
             public bool SpeechFlg { get; set; }
+            public double SpeedScale { get; set; } = 1;
         }
 
         static readonly List<Speaker> VoiceLists = new List<Speaker> { };
@@ -292,6 +294,7 @@ namespace SyncRoomChatTool
             public DateTime LastCommentTime;
             public DateTime NowCommentTime;
             public bool CanSpeech = false;
+            public double SpeedScale = 1;
 
             public CommentObject(string newComment, string lastComment, bool appCanSpeech)
             {
@@ -338,8 +341,16 @@ namespace SyncRoomChatTool
                         {
                             //固定ファイルが設定されている場合は直再生。
                             SoundPlayer player = new SoundPlayer(App.Default.linkWaveFilePath);
-                            //同期再生する。非同期から同期にした。
-                            player.PlaySync();
+                            //再生する。
+                            if (App.Default.PlayAsync) { 
+                                //非同期
+                                player.Play(); 
+                            }
+                            else
+                            {
+                                //同期
+                                player.PlaySync();
+                            }
                         }
                         else
                         {
@@ -419,12 +430,13 @@ namespace SyncRoomChatTool
                         StyleId = item.StyleId;
                         ChimeFlg = item.ChimeFlg;
                         SpeechFlg = item.SpeechFlg;
+                        SpeedScale = item.SpeedScale;
                         break;
                     }
                 }
                 else
                 {
-                    UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, SpeechFlg);
+                    UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, SpeechFlg, SpeedScale);
                 }
 
                 //行頭のコマンド有無のチェック。スタイル指定。
@@ -442,8 +454,32 @@ namespace SyncRoomChatTool
                             StyleId = int.Parse(match.ToString());
 
                             //[]で指定された数値が、スタイル一覧と合致した場合は、UserTableになければ追加、あれば更新。
-                            UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, SpeechFlg);
+                            UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, SpeechFlg, SpeedScale);
                         }
+                    }
+                }
+
+                //行頭のコマンド有無のチェック。スピード指定。
+                match = Regex.Match(Comment, @"^/p", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    //まずは/pで始まってるか。見つかったらそれはコメントから除去
+                    Comment = Comment.Replace(match.ToString(), "");
+                    match = Regex.Match(Comment, @"^[[0-9]+[.]?[0-9]{1,1}|[0-9]+]");
+                    if (match.Success)
+                    {
+                        //次に数字があるか。
+                        Comment = Comment.Replace(match.ToString(), "");
+                        SpeedScale = Convert.ToDouble(match.ToString());
+                        if (SpeedScale > 1.8)
+                        {
+                            SpeedScale = 1.8;
+                        }
+                        if (SpeedScale < 0.4)
+                        {
+                            SpeedScale = 0.4;
+                        }
+                        UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, SpeechFlg, SpeedScale);
                     }
                 }
 
@@ -452,7 +488,7 @@ namespace SyncRoomChatTool
                 if (match.Success)
                 {
                     Comment = Comment.Replace(match.ToString(), "");
-                    UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, !SpeechFlg);
+                    UpdateUserOption(existsFlg, UserName, StyleId, ChimeFlg, !SpeechFlg, SpeedScale);
                 }
 
                 //行頭コマンドチェック。/c はチャイムのトグル
@@ -460,7 +496,7 @@ namespace SyncRoomChatTool
                 if (match.Success)
                 {
                     Comment = Comment.Replace(match.ToString(), "");
-                    UpdateUserOption(existsFlg, UserName, StyleId, !ChimeFlg, SpeechFlg);
+                    UpdateUserOption(existsFlg, UserName, StyleId, !ChimeFlg, SpeechFlg, SpeedScale);
                 }
 
                 //UserTableから、StyleIdその他の取り出し。
@@ -523,7 +559,7 @@ namespace SyncRoomChatTool
             }
         }
 
-        private static void UpdateUserOption(bool existsFlg, string UserName, int StyleId, bool ChatFlg, bool SpeechFlg)
+        private static void UpdateUserOption(bool existsFlg, string UserName, int StyleId, bool ChatFlg, bool SpeechFlg, double SpeedScale)
         {
             if (existsFlg)
             {
@@ -533,6 +569,7 @@ namespace SyncRoomChatTool
                     item.UserName = UserName;
                     item.ChimeFlg = ChatFlg;
                     item.SpeechFlg = SpeechFlg;
+                    item.SpeedScale = SpeedScale;
                 }
             }
             else
@@ -542,7 +579,8 @@ namespace SyncRoomChatTool
                     StyleId = StyleId,
                     UserName = UserName,
                     ChimeFlg = ChatFlg,
-                    SpeechFlg = SpeechFlg
+                    SpeechFlg = SpeechFlg,
+                    SpeedScale = SpeedScale
                 };
                 UserTable.Add(addLine);
             }
@@ -556,6 +594,10 @@ namespace SyncRoomChatTool
 
             //バージョンの表示
             this.Text += $" {fileVersionInfo.ProductVersion}";
+
+            //オートコンプリート機能
+            autoCompList = new AutoCompleteStringCollection();
+            textBox1.AutoCompleteCustomSource = autoCompList;
 
             //各種オプションの取得
             MenuEnableTwitcasting.Checked = App.Default.useTwitcasting;
@@ -664,8 +706,20 @@ namespace SyncRoomChatTool
                             StyleDef.Add(addLine);
                         }
                     }
+
+                    VoiceLists.Sort((a,b)=> a.StyleId - b.StyleId);
+                    foreach (Speaker st in VoiceLists)
+                    {
+                        // 候補リストに項目を追加（初期設定）
+                        autoCompList.Add($"/{st.StyleId} {st.UserName} にボイス変更");
+                    }
+                    autoCompList.Add("/p0.4 最小スピード");
+                    autoCompList.Add("/p1.0 標準スピード");
+                    autoCompList.Add("/p1.8 最大スピード");
                 }
             }
+            autoCompList.Add("/c チャイムのトグル");
+            autoCompList.Add("/s スピーチのトグル");
 
             //メインループを実行。
             _ = TaskGetChat("SYNCROOM");
@@ -812,7 +866,7 @@ namespace SyncRoomChatTool
                             UpdateRichText(errMsg);
                             SpeechSynthesizer synth = new SpeechSynthesizer { };
                             synth.SelectVoice("Microsoft Haruka Desktop");
-                            synth.SpeakAsync(errMsg);
+                            synth.Speak(errMsg);
                             await Task.Delay(3000);
                             Application.Exit();
                         }
@@ -1062,6 +1116,7 @@ namespace SyncRoomChatTool
                     {
                         if (commentDiff.TotalSeconds > 5)
                         {
+                            //チャイムは非同期で鳴らす。
                             SystemSounds.Asterisk.Play();
                             await Task.Delay(100);
                         }
@@ -1129,6 +1184,7 @@ namespace SyncRoomChatTool
             //音声合成
             var queryJson = JsonConvert.DeserializeObject<AccentPhasesRoot>(QueryResponce.ToString());
             queryJson.VolumeScale = App.Default.Volume;
+            queryJson.SpeedScale = commentObj.SpeedScale;
             QueryResponce = JsonConvert.SerializeObject(queryJson);
 
             if (ret.StatusCode.Equals(HttpStatusCode.OK))
@@ -1141,8 +1197,17 @@ namespace SyncRoomChatTool
                 if (ret.StatusCode.Equals(HttpStatusCode.OK))
                 {
                     SoundPlayer player = new SoundPlayer(wavFile);
-                    //再生する
-                    player.PlaySync();
+                    //再生する。
+                    if (App.Default.PlayAsync)
+                    {
+                        //非同期
+                        player.Play();
+                    }
+                    else
+                    {
+                        //同期
+                        player.PlaySync();
+                    }
                 }
             }
         }
@@ -1169,6 +1234,7 @@ namespace SyncRoomChatTool
                 App.Default.VoiceVoxAddress = apConf.voiceVoxAddress;
                 App.Default.VoiceVoxPath = apConf.voiceVoxPath;
                 App.Default.Volume = apConf.volume;
+                App.Default.PlayAsync = apConf.playAsync;
                 App.Default.Save();
             }
         }
@@ -1257,6 +1323,12 @@ namespace SyncRoomChatTool
             if (textBox1.Text.Length < 1)
             {
                 return;
+            }
+            // 候補リストに項目を追加
+            string newItem = textBox1.Text.Trim();
+            if (!String.IsNullOrEmpty(newItem) && !autoCompList.Contains(newItem))
+            {
+                autoCompList.Add(newItem);
             }
 
             //ここにSyncRoomのチャットにテキストを流す処理を入れる。

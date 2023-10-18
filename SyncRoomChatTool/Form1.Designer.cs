@@ -176,22 +176,23 @@
             this.MenuTwitcasting.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.MenuEnableTwitcasting,
             this.MenuSettingTwitcasting});
+            this.MenuTwitcasting.Font = new System.Drawing.Font("Yu Gothic UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.MenuTwitcasting.Name = "MenuTwitcasting";
-            this.MenuTwitcasting.Size = new System.Drawing.Size(126, 27);
+            this.MenuTwitcasting.Size = new System.Drawing.Size(141, 27);
             this.MenuTwitcasting.Text = "ツイキャス連携(&C)";
             // 
             // MenuEnableTwitcasting
             // 
             this.MenuEnableTwitcasting.CheckOnClick = true;
             this.MenuEnableTwitcasting.Name = "MenuEnableTwitcasting";
-            this.MenuEnableTwitcasting.Size = new System.Drawing.Size(197, 26);
+            this.MenuEnableTwitcasting.Size = new System.Drawing.Size(213, 28);
             this.MenuEnableTwitcasting.Text = "連携する(&R)";
             this.MenuEnableTwitcasting.Click += new System.EventHandler(this.MenuEnableTwitcasting_Click);
             // 
             // MenuSettingTwitcasting
             // 
             this.MenuSettingTwitcasting.Name = "MenuSettingTwitcasting";
-            this.MenuSettingTwitcasting.Size = new System.Drawing.Size(197, 26);
+            this.MenuSettingTwitcasting.Size = new System.Drawing.Size(213, 28);
             this.MenuSettingTwitcasting.Text = "ツイキャス設定(&O)";
             this.MenuSettingTwitcasting.Click += new System.EventHandler(this.MenuSettingTwitcasting_Click);
             // 
@@ -213,7 +214,7 @@
             this.toolStripStatusLabel3,
             this.toolStripStatusLabel4});
             this.statusStrip1.Location = new System.Drawing.Point(0, 560);
-            this.statusStrip1.Margin = new System.Windows.Forms.Padding(3);
+            this.statusStrip1.Margin = new System.Windows.Forms.Padding(2);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(940, 22);
             this.statusStrip1.TabIndex = 1;
@@ -244,6 +245,7 @@
             this.splitContainer1.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
             this.splitContainer1.IsSplitterFixed = true;
             this.splitContainer1.Location = new System.Drawing.Point(0, 31);
+            this.splitContainer1.Margin = new System.Windows.Forms.Padding(2);
             this.splitContainer1.Name = "splitContainer1";
             this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
             // 
@@ -257,11 +259,11 @@
             // 
             this.splitContainer1.Panel2.Controls.Add(this.textBox1);
             this.splitContainer1.Panel2.Controls.Add(this.button1);
-            this.splitContainer1.Panel2.Margin = new System.Windows.Forms.Padding(3);
+            this.splitContainer1.Panel2.Margin = new System.Windows.Forms.Padding(2);
             this.splitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(5);
             this.splitContainer1.Panel2MinSize = 37;
             this.splitContainer1.Size = new System.Drawing.Size(940, 529);
-            this.splitContainer1.SplitterDistance = 480;
+            this.splitContainer1.SplitterDistance = 489;
             this.splitContainer1.SplitterWidth = 1;
             this.splitContainer1.TabIndex = 6;
             // 
@@ -278,7 +280,7 @@
             this.richTextBox1.ReadOnly = true;
             this.richTextBox1.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
             this.richTextBox1.ShortcutsEnabled = false;
-            this.richTextBox1.Size = new System.Drawing.Size(932, 472);
+            this.richTextBox1.Size = new System.Drawing.Size(932, 481);
             this.richTextBox1.TabIndex = 4;
             this.richTextBox1.Text = "";
             this.richTextBox1.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.RichTextBox1_LinkClicked);
@@ -286,10 +288,17 @@
             // 
             // textBox1
             // 
+            this.textBox1.AutoCompleteCustomSource.AddRange(new string[] {
+            "kore",
+            "are",
+            "dore"});
+            this.textBox1.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.textBox1.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             this.textBox1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.textBox1.Font = new System.Drawing.Font("メイリオ", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.textBox1.ImeMode = System.Windows.Forms.ImeMode.On;
             this.textBox1.Location = new System.Drawing.Point(5, 5);
+            this.textBox1.Margin = new System.Windows.Forms.Padding(2);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(930, 37);
             this.textBox1.TabIndex = 0;
@@ -298,6 +307,7 @@
             // button1
             // 
             this.button1.Location = new System.Drawing.Point(826, 8);
+            this.button1.Margin = new System.Windows.Forms.Padding(2);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(80, 30);
             this.button1.TabIndex = 2;
@@ -317,9 +327,9 @@
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
             this.Margin = new System.Windows.Forms.Padding(2);
-            this.MinimumSize = new System.Drawing.Size(300, 150);
+            this.MinimumSize = new System.Drawing.Size(299, 148);
             this.Name = "Form1";
-            this.Text = "SyncRoomChatTool";
+            this.Text = "SyncRoom読み上げちゃん";
             this.Activated += new System.EventHandler(this.TextBox1_Enter);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
             this.Load += new System.EventHandler(this.Form1_Load);

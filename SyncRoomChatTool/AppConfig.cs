@@ -13,6 +13,7 @@ namespace SyncRoomChatTool
         public string voiceVoxPath;
         public string voiceVoxAddress;
         public double volume;
+        public bool playAsync;
 
         public AppConfig()
         {
@@ -33,6 +34,7 @@ namespace SyncRoomChatTool
             waitTiming = numWait.Value;
             cutLength = numCut.Value;
             linkWaveFilePath = textBox1.Text;
+            playAsync = checkBox1.Checked;
             Close();
         }
 
@@ -46,6 +48,7 @@ namespace SyncRoomChatTool
             numCut.Value = App.Default.cutLength;
             textBox1.Text = App.Default.linkWaveFilePath;
             textBox2.Text = App.Default.VoiceVoxPath;
+            checkBox1.Checked = App.Default.PlayAsync;
             try
             {
                 volume = App.Default.Volume;
