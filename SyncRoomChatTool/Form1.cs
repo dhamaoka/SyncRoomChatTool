@@ -1096,6 +1096,8 @@ namespace SyncRoomChatTool
             await Task.Run(async () => {
                 while (true)
                 {
+                    await Task.Delay(50);
+
                     if (CommentQue.Count < 1) { continue; }
                     CommentQue.TryTake(out CommentObject commentObj, 50);
                     if (commentObj == null)
