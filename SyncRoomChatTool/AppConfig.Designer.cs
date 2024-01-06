@@ -38,6 +38,7 @@
             this.textBox3 = new System.Windows.Forms.TextBox();
             this.numCut = new System.Windows.Forms.NumericUpDown();
             this.trackBar1 = new System.Windows.Forms.TrackBar();
+            this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.fontDialog1 = new System.Windows.Forms.FontDialog();
@@ -51,7 +52,6 @@
             this.buttonPlay = new System.Windows.Forms.Button();
             this.label8 = new System.Windows.Forms.Label();
             this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
-            this.checkBox1 = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.numWait)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numCut)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
@@ -94,7 +94,7 @@
             0,
             0});
             this.numWait.Minimum = new decimal(new int[] {
-            500,
+            100,
             0,
             0,
             0});
@@ -103,7 +103,7 @@
             this.numWait.TabIndex = 1;
             this.numWait.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.numWait.ThousandsSeparator = true;
-            this.toolTip1.SetToolTip(this.numWait, "監視間隔を数字で入力します。ミリ秒です。\r\n500ミリ秒～10,000ミリ秒（10秒）です。");
+            this.toolTip1.SetToolTip(this.numWait, "監視間隔を数字で入力します。ミリ秒です。\r\n100ミリ秒～10,000ミリ秒（10秒）です。");
             this.numWait.Value = new decimal(new int[] {
             10000,
             0,
@@ -179,6 +179,20 @@
             this.toolTip1.SetToolTip(this.trackBar1, "最大で標準の倍、最小で標準の1/10の音量で出力します。");
             this.trackBar1.Value = 10;
             this.trackBar1.ValueChanged += new System.EventHandler(this.TrackBar1_ValueChanged);
+            // 
+            // checkBox1
+            // 
+            this.checkBox1.AutoSize = true;
+            this.checkBox1.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkBox1.Font = new System.Drawing.Font("メイリオ", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.checkBox1.Location = new System.Drawing.Point(11, 253);
+            this.checkBox1.Name = "checkBox1";
+            this.checkBox1.Size = new System.Drawing.Size(175, 27);
+            this.checkBox1.TabIndex = 18;
+            this.checkBox1.Text = "音声の非同期再生(&P)";
+            this.checkBox1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.toolTip1.SetToolTip(this.checkBox1, "音声を非同期再生する場合にチェックします。音声が被った場合に先の音声がキャンセルされ後の音声が再生されます。");
+            this.checkBox1.UseVisualStyleBackColor = true;
             // 
             // label1
             // 
@@ -335,20 +349,6 @@
             0,
             65536});
             this.numericUpDown1.ValueChanged += new System.EventHandler(this.NumericUpDown1_ValueChanged);
-            // 
-            // checkBox1
-            // 
-            this.checkBox1.AutoSize = true;
-            this.checkBox1.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkBox1.Font = new System.Drawing.Font("メイリオ", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.checkBox1.Location = new System.Drawing.Point(11, 253);
-            this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(175, 27);
-            this.checkBox1.TabIndex = 18;
-            this.checkBox1.Text = "音声の非同期再生(&P)";
-            this.checkBox1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.toolTip1.SetToolTip(this.checkBox1, "音声を非同期再生する場合にチェックします。音声が被った場合に先の音声がキャンセルされ後の音声が再生されます。");
-            this.checkBox1.UseVisualStyleBackColor = true;
             // 
             // AppConfig
             // 

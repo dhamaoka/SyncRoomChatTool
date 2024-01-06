@@ -42,9 +42,9 @@ namespace SyncRoomChatTool
 
         private void AppConfig_Load(object sender, EventArgs e)
         {
-            if (App.Default.waitTiming < 500)
+            if (App.Default.waitTiming < numWait.Minimum)
             {
-                App.Default.waitTiming = 500;
+                App.Default.waitTiming = numWait.Minimum;
             }
             numWait.Value = App.Default.waitTiming;
             numCut.Value = App.Default.cutLength;

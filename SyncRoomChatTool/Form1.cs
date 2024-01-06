@@ -396,6 +396,7 @@ namespace SyncRoomChatTool
                 match = Regex.Match(Comment, @"(８|8){2,}", RegexOptions.IgnoreCase);
                 if (match.Success)
                 {
+                    Lang = 0;
                     Comment = Comment.Replace(match.ToString(), "、パチパチパチ");
                 }
 
@@ -403,6 +404,7 @@ namespace SyncRoomChatTool
                 match = Regex.Match(Comment, @"(８|8){1,}", RegexOptions.IgnoreCase);
                 if (match.Success)
                 {
+                    Lang = 0;
                     Comment = Comment.Replace(match.ToString(), "、パチ");
                 }
 
@@ -410,6 +412,7 @@ namespace SyncRoomChatTool
                 match = Regex.Match(Comment, @"(ｗ|w){2,}", RegexOptions.IgnoreCase);
                 if (match.Success)
                 {
+                    Lang = 0;
                     Comment = Comment.Replace(match.ToString(), "、ふふっ");
                 }
 
@@ -417,6 +420,7 @@ namespace SyncRoomChatTool
                 match = Regex.Match(Comment, @"(ｗ|w){1,}$", RegexOptions.IgnoreCase);
                 if (match.Success)
                 {
+                    Lang = 0;
                     Comment = Comment.Replace(match.ToString(), "、ふふっ");
                 }
 
@@ -443,7 +447,7 @@ namespace SyncRoomChatTool
         /// <returns></returns>
         private List<string> GetDevices()
         {
-            List<string> deviceList = new List<string>();
+            List<string> deviceList = new List<string>();        
             for (int i = 0; i < WaveOut.DeviceCount; i++)
             {
                 var capabilities = WaveOut.GetCapabilities(i);
@@ -453,6 +457,15 @@ namespace SyncRoomChatTool
 #endif
                 toolStripComboBox1.Items.Add(capabilities.ProductName);
             }
+            /* //sort はええか。なんか不定な気がしてはいる。そしてこのメソッド、戻りは誰も使ってないのである。
+            var list = deviceList.ToArray().AsEnumerable().OrderBy(x => x);
+
+            foreach (var device in list)
+            {
+                toolStripComboBox1.Items.Add(device.ToString());
+            }
+            */
+
             return deviceList;
         }
 
@@ -1129,7 +1142,7 @@ namespace SyncRoomChatTool
             url = baseUrl + $"audio_query?text='{commentObj.Comment}'&speaker={commentObj.StyleId}";
 
             var client = new ServiceHttpClient(url, ServiceHttpClient.RequestType.none);
-            String QueryResponce = "";
+            string QueryResponce = "";
 
             var ret = client.Post(ref QueryResponce, "");
 
@@ -1177,7 +1190,7 @@ namespace SyncRoomChatTool
                         //player.PlaySync();
                         while (waveOut.PlaybackState == PlaybackState.Playing)
                         {
-                            Thread.Sleep(50);
+                            await Task.Delay(50);
                         }
                     }
                 }
