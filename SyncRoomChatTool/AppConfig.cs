@@ -1,6 +1,8 @@
-﻿using System;
+﻿using NAudio.Wave;
+using System;
 using System.IO;
 using System.Media;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace SyncRoomChatTool
@@ -157,9 +159,25 @@ namespace SyncRoomChatTool
         {
             if (!string.IsNullOrEmpty(textBox1.Text))
             {
+                /*
                 SoundPlayer player = new SoundPlayer(textBox1.Text);
                 //非同期再生する
                 player.Play();
+                */
+
+                if (!File.Exists(textBox1.Text))
+                {
+                    return;
+                }
+
+                var waveReader = new WaveFileReader(textBox1.Text);
+                var waveOut = new WaveOut
+                {
+                    DeviceNumber = App.Default.OutputDevice,
+                    NumberOfBuffers = 8
+                };
+                waveOut.Init(waveReader);
+                waveOut.Play();
             }
         }
 

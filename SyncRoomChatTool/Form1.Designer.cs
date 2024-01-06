@@ -44,6 +44,7 @@
             this.MenuEnableTwitcasting = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuSettingTwitcasting = new System.Windows.Forms.ToolStripMenuItem();
             this.Menu_Help = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripComboBox1 = new System.Windows.Forms.ToolStripComboBox();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
@@ -70,10 +71,11 @@
             this.MenuTool,
             this.MenuSpeech,
             this.MenuTwitcasting,
-            this.Menu_Help});
+            this.Menu_Help,
+            this.toolStripComboBox1});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(940, 31);
+            this.menuStrip1.Size = new System.Drawing.Size(940, 32);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -83,7 +85,7 @@
             this.menuClose});
             this.MenuFile.Font = new System.Drawing.Font("Yu Gothic UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.MenuFile.Name = "MenuFile";
-            this.MenuFile.Size = new System.Drawing.Size(90, 27);
+            this.MenuFile.Size = new System.Drawing.Size(90, 28);
             this.MenuFile.Text = "ファイル(&F)";
             // 
             // menuClose
@@ -103,7 +105,7 @@
             this.MenuOpenLink});
             this.MenuTool.Font = new System.Drawing.Font("Yu Gothic UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.MenuTool.Name = "MenuTool";
-            this.MenuTool.Size = new System.Drawing.Size(81, 27);
+            this.MenuTool.Size = new System.Drawing.Size(81, 28);
             this.MenuTool.Text = "ツール(&T)";
             // 
             // MenuFont
@@ -148,7 +150,7 @@
             this.MenuUseVoiceVox});
             this.MenuSpeech.Font = new System.Drawing.Font("Yu Gothic UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.MenuSpeech.Name = "MenuSpeech";
-            this.MenuSpeech.Size = new System.Drawing.Size(92, 27);
+            this.MenuSpeech.Size = new System.Drawing.Size(92, 28);
             this.MenuSpeech.Text = "スピーチ(&S)";
             // 
             // MenuEnebleSpeech
@@ -178,7 +180,7 @@
             this.MenuSettingTwitcasting});
             this.MenuTwitcasting.Font = new System.Drawing.Font("Yu Gothic UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.MenuTwitcasting.Name = "MenuTwitcasting";
-            this.MenuTwitcasting.Size = new System.Drawing.Size(141, 27);
+            this.MenuTwitcasting.Size = new System.Drawing.Size(141, 28);
             this.MenuTwitcasting.Text = "ツイキャス連携(&C)";
             // 
             // MenuEnableTwitcasting
@@ -200,9 +202,15 @@
             // 
             this.Menu_Help.Font = new System.Drawing.Font("Yu Gothic UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.Menu_Help.Name = "Menu_Help";
-            this.Menu_Help.Size = new System.Drawing.Size(87, 27);
+            this.Menu_Help.Size = new System.Drawing.Size(87, 28);
             this.Menu_Help.Text = "ヘルプ(&H)";
             this.Menu_Help.Click += new System.EventHandler(this.Menu_Help_Click);
+            // 
+            // toolStripComboBox1
+            // 
+            this.toolStripComboBox1.Name = "toolStripComboBox1";
+            this.toolStripComboBox1.Size = new System.Drawing.Size(250, 28);
+            this.toolStripComboBox1.SelectedIndexChanged += new System.EventHandler(this.ToolStripComboBox1_SelectedIndexChanged);
             // 
             // statusStrip1
             // 
@@ -244,7 +252,7 @@
             this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainer1.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
             this.splitContainer1.IsSplitterFixed = true;
-            this.splitContainer1.Location = new System.Drawing.Point(0, 31);
+            this.splitContainer1.Location = new System.Drawing.Point(0, 32);
             this.splitContainer1.Margin = new System.Windows.Forms.Padding(2);
             this.splitContainer1.Name = "splitContainer1";
             this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
@@ -262,8 +270,8 @@
             this.splitContainer1.Panel2.Margin = new System.Windows.Forms.Padding(2);
             this.splitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(5);
             this.splitContainer1.Panel2MinSize = 40;
-            this.splitContainer1.Size = new System.Drawing.Size(940, 529);
-            this.splitContainer1.SplitterDistance = 483;
+            this.splitContainer1.Size = new System.Drawing.Size(940, 528);
+            this.splitContainer1.SplitterDistance = 487;
             this.splitContainer1.SplitterWidth = 1;
             this.splitContainer1.TabIndex = 6;
             // 
@@ -280,7 +288,7 @@
             this.richTextBox1.ReadOnly = true;
             this.richTextBox1.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
             this.richTextBox1.ShortcutsEnabled = false;
-            this.richTextBox1.Size = new System.Drawing.Size(932, 475);
+            this.richTextBox1.Size = new System.Drawing.Size(932, 479);
             this.richTextBox1.TabIndex = 4;
             this.richTextBox1.Text = "";
             this.richTextBox1.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.RichTextBox1_LinkClicked);
@@ -375,6 +383,7 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel4;
         private System.Windows.Forms.ToolStripMenuItem MenuOpenLink;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.ToolStripComboBox toolStripComboBox1;
     }
 }
 

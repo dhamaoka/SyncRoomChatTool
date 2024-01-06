@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using NAudio.Wave;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ using System.Net;
 using System.Reflection;
 using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Automation;
 using System.Windows.Forms;
@@ -44,17 +46,13 @@ namespace SyncRoomChatTool
                 }
                 else
                 {
-                    if (string.IsNullOrEmpty(richTextBox1.Text))
-                    {
-                        return true;
-                    }
+                    if (string.IsNullOrEmpty(richTextBox1.Text)) { return true; }
                 }
             }
             catch
             {
                 Application.Exit();
             };
-
             return false;
         }
 
@@ -106,75 +104,6 @@ namespace SyncRoomChatTool
             };
         }
 
-        //audio_queryした後に帰ってくるレスポンスを編集するためのクラス群。
-        public class AccentPhrases
-        {
-            [JsonProperty("moras")]
-            public List<Mora> Moras { get; set; } = new List<Mora>();
-            [JsonProperty("accent")]
-            public double Accent { get; set; } = 0;
-            [JsonProperty("pause_mora")]
-            public PauseMora PauseMora { get; set; } = new PauseMora();
-            [JsonProperty("is_interrogative")]
-            public bool IsInterrogative { get; set; } = false;
-        }
-
-        public class Mora
-        {
-            [JsonProperty("text")]
-            public string Text { get; set; } = "string";
-            [JsonProperty("consonant")]
-            public string Consonant { get; set; } = "string";
-            [JsonProperty("consonant_length")]
-            public string ConsonantLength { get; set; }
-            [JsonProperty("vowel")]
-            public string Vowel { get; set; } = "string";
-            [JsonProperty("vowel_length")]
-            public double VowelLength { get; set; } = 0;
-            [JsonProperty("pitch")]
-            public double Pitch { get; set; } = 0;
-        }
-
-        public class PauseMora
-        {
-            [JsonProperty("text")]
-            public string Text { get; set; } = "string";
-            [JsonProperty("consonant")]
-            public string Consonant { get; set; } = "string";
-            [JsonProperty("consonant_length")]
-            public string ConsonantLength { get; set; }
-            [JsonProperty("vowel")]
-            public string Vowel { get; set; } = "string";
-            [JsonProperty("vowel_length")]
-            public double VowelLength { get; set; } = 0;
-            [JsonProperty("pitch")]
-            public double Pitch { get; set; } = 0;
-        }
-
-        public class AccentPhasesRoot
-        {
-            [JsonProperty("accent_phrases")]
-            public List<AccentPhrases> AccentPhrases { get; set; } = new List<AccentPhrases>{ };
-            [JsonProperty("speedScale")]
-            public double SpeedScale { get; set; } = 0;
-            [JsonProperty("pitchScale")]
-            public double PitchScale { get; set; } = 0;
-            [JsonProperty("intonationScale")]
-            public double IntonationScale { get; set; } = 0;
-            [JsonProperty("volumeScale")]
-            public double VolumeScale { get; set; } = 0;
-            [JsonProperty("prePhonemeLength")]
-            public double PrePhonemeLength { get; set; } = 0;
-            [JsonProperty("postPhonemeLength")]
-            public double PostPhonemeLength { get; set; } = 0;
-            [JsonProperty("outputSamplingRate")]
-            public double OutputSamplingRate { get; set; } = 0;
-            [JsonProperty("outputStereo")]
-            public bool OutputStereo { get; set; } = true;
-            [JsonProperty("kana")]
-            public string Kana { get; set; } = "string";
-        }
-
         private static string LastTwitCastingComment = "";
         private static string NowTwitCastingComment = "";
         private static int commentCounter = 0;
@@ -186,85 +115,6 @@ namespace SyncRoomChatTool
         public Form1()
         {
             InitializeComponent();
-        }
-
-        private class TwitCastingUserInfo
-        {
-            public string Supporter_count { get; set; }
-            public string Supporting_count { get; set; }
-            [JsonProperty("user")]
-            public User UserInfo { get; set; }
-        }
-
-        public class User
-        {
-            [JsonProperty("id")]
-            public string Id { get; set; }
-            [JsonProperty("screen_id")]
-            public string ScreenId { get; set; }
-            [JsonProperty("name")]
-            public string Name { get; set; }
-            [JsonProperty("image")]
-            public string Image { get; set; }
-            [JsonProperty("profile")]
-            public string Profile { get; set; }
-            [JsonProperty("level")]
-            public int Level { get; set; }
-            [JsonProperty("last_movie_id")]
-            public string LastMovieId { get; set; }
-            [JsonProperty("is_live")]
-            public bool IsAlive { get; set; }
-            [JsonProperty("SupporterCount")]
-            public int SupporterCount { get; set; }
-            [JsonProperty("supporting_count")]
-            public int SupportingCount { get; set; }
-            [JsonProperty("created")]
-            public int Created { get; set; }
-        }
-
-        public class TwitCastingComment
-        {
-            [JsonProperty("id")]
-            public string Id { get; set; }
-            [JsonProperty("message")]
-            public string Message { get; set; }
-            [JsonProperty("created")]
-            public int Created { get; set; }
-            [JsonProperty("from_user")]
-            public User FromUser { get; set; }
-        }
-
-        public class TwitCastingCommentRoot
-        {
-            [JsonProperty("movie_id")]
-            public string MovieId { get; set; }
-            [JsonProperty("all_count")]
-            public int AllCount { get; set; }
-            [JsonProperty("comments")]
-            public List<TwitCastingComment> Comments { get; set; }
-        }
-
-        private class SpeakerFromAPI
-        {
-            public string Name { get; set; }
-            public string Speaker_uuid { get; set; }
-            public List<StyleFromAPI> Styles { get; set; }
-            public string Version { get; set; }
-        }
-
-        private class StyleFromAPI
-        {
-            public int Id { get; set; }
-            public string Name { get; set; }
-        }
-
-        private class Speaker
-        {
-            public int StyleId { get; set; }
-            public string UserName { get; set; }
-            public bool ChimeFlg { get; set; }
-            public bool SpeechFlg { get; set; }
-            public double SpeedScale { get; set; } = 1;
         }
 
         static readonly List<Speaker> VoiceLists = new List<Speaker> { };
@@ -339,6 +189,7 @@ namespace SyncRoomChatTool
                     {
                         if (File.Exists(App.Default.linkWaveFilePath))
                         {
+                            /*
                             //固定ファイルが設定されている場合は直再生。
                             SoundPlayer player = new SoundPlayer(App.Default.linkWaveFilePath);
                             //再生する。
@@ -351,6 +202,33 @@ namespace SyncRoomChatTool
                                 //同期
                                 player.PlaySync();
                             }
+                            */
+
+                            var waveReader = new WaveFileReader(App.Default.linkWaveFilePath);
+                            var waveOut = new WaveOut
+                            {
+                                DeviceNumber = App.Default.OutputDevice,
+                            };
+                            waveOut.Init(waveReader);
+                            waveOut.Play();
+
+                            if (App.Default.PlayAsync)
+                            {
+                                Thread.Sleep(2000);
+                                //非同期
+                                //player.Play();
+                            }
+                            else
+                            {
+                                //SoundPlayer player = new SoundPlayer(wavFile);
+                                //同期
+                                //player.PlaySync();
+                                while (waveOut.PlaybackState == PlaybackState.Playing)
+                                {
+                                    Thread.Sleep(50);
+                                }
+                            }
+
                         }
                         else
                         {
@@ -559,6 +437,25 @@ namespace SyncRoomChatTool
             }
         }
 
+        /// <summary>
+        /// PCのオーディオ出力一覧を取得（とコンボボックスに追加）
+        /// </summary>
+        /// <returns></returns>
+        private List<string> GetDevices()
+        {
+            List<string> deviceList = new List<string>();
+            for (int i = 0; i < WaveOut.DeviceCount; i++)
+            {
+                var capabilities = WaveOut.GetCapabilities(i);
+                deviceList.Add(capabilities.ProductName);
+#if DEBUG
+                Debug.WriteLine($"{i}:{capabilities.ProductName}");
+#endif
+                toolStripComboBox1.Items.Add(capabilities.ProductName);
+            }
+            return deviceList;
+        }
+
         private static void UpdateUserOption(bool existsFlg, string UserName, int StyleId, bool ChatFlg, bool SpeechFlg, double SpeedScale)
         {
             if (existsFlg)
@@ -588,6 +485,9 @@ namespace SyncRoomChatTool
 
         private async void Form1_Load(object sender, EventArgs e)
         {
+            //前のバージョンのプロパティを引き継ぐぜ。
+            App.Default.Upgrade();
+
             //アセンブリーからバージョン取得
             var assembly = Assembly.GetExecutingAssembly();
             var fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
@@ -721,6 +621,8 @@ namespace SyncRoomChatTool
             autoCompList.Add("/c チャイムのトグル");
             autoCompList.Add("/s スピーチのトグル");
 
+            GetDevices();
+
             //メインループを実行。
             _ = TaskGetChat("SYNCROOM");
 
@@ -734,6 +636,44 @@ namespace SyncRoomChatTool
             _ = TaskTryTakeAndSpeech();
         }
 
+        private void Form1_Shown(object sender, EventArgs e)
+        {
+            toolStripComboBox1.SelectedIndex = App.Default.OutputDevice;
+            toolStripComboBox1.Select();
+
+            //todo:ロードでやってるのが良くないのか、起動してなんぞ動かんと表示が変わらん問題。Shownに移したが変わらん。
+            //何故かチャットウィンドウ開いたら、反応するのよねぇ。
+            richTextBox1.Refresh();
+            this.Size = App.Default.windowSize;
+            this.Refresh();
+            textBox1.Focus();
+        }
+
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            try
+            {
+                App.Default.zoomFacter = richTextBox1.ZoomFactor;
+                App.Default.logFont = richTextBox1.Font;
+                App.Default.windowSize = this.Size;
+                App.Default.useTwitcasting = MenuEnableTwitcasting.Checked;
+                App.Default.WindowTopMost = MenuWindowTopMost.Checked;
+                App.Default.OpenLink = MenuOpenLink.Checked;
+                if (toolStripComboBox1.SelectedIndex == -1)
+                {
+                    App.Default.OutputDevice = 0;
+                }
+                else
+                {
+                    App.Default.OutputDevice = toolStripComboBox1.SelectedIndex;
+                }
+                App.Default.Save();
+            }
+            catch
+            {
+                Application.Exit();
+            }
+        }
         async Task TaskGetChat(string ProcessName)
         {
             //初期化。前回取得のログ全部と、最後のコメントの保管場所
@@ -1091,7 +1031,7 @@ namespace SyncRoomChatTool
             LastTwitCastingComment = NowTwitCastingComment;
         }
 
-        private static async Task TaskTryTakeAndSpeech()
+        private async Task TaskTryTakeAndSpeech()
         {
             await Task.Run(async () => {
                 while (true)
@@ -1118,8 +1058,23 @@ namespace SyncRoomChatTool
                     {
                         if (commentDiff.TotalSeconds > 5)
                         {
-                            //チャイムは非同期で鳴らす。
-                            SystemSounds.Asterisk.Play();
+                            var chimePath = @"C:\windows\media\windows background.wav";
+                            if (File.Exists(chimePath))
+                            {
+
+                                var waveReader = new WaveFileReader(chimePath);
+                                var waveOut = new WaveOut
+                                {
+                                    DeviceNumber = App.Default.OutputDevice,
+                                };
+                                waveOut.Init(waveReader);
+                                waveOut.Play();
+                            }
+                            else
+                            {
+                                //チャイムは非同期で鳴らす。
+                                SystemSounds.Asterisk.Play();
+                            }
                             await Task.Delay(100);
                         }
                     }
@@ -1154,7 +1109,7 @@ namespace SyncRoomChatTool
             });
         }
 
-        private static void SpeechByVOICEVOX(CommentObject commentObj)
+        private static async void SpeechByVOICEVOX(CommentObject commentObj)
         {
             string baseUrl = App.Default.VoiceVoxAddress;
             string url;
@@ -1198,17 +1153,32 @@ namespace SyncRoomChatTool
                 ret = client.Post(ref QueryResponce, wavFile);
                 if (ret.StatusCode.Equals(HttpStatusCode.OK))
                 {
-                    SoundPlayer player = new SoundPlayer(wavFile);
                     //再生する。
+                    var waveReader = new WaveFileReader(wavFile);
+                    var waveOut = new WaveOut
+                    {
+                        DeviceNumber = App.Default.OutputDevice,
+                    };
+                    waveOut.Init(waveReader);
+                    waveOut.Play();
+
                     if (App.Default.PlayAsync)
                     {
+                        //完全に待たないとなると、次のループ処理でバツっと切られちゃうのでねぇ。
+                        //非同期なのに2秒ほど待機にしてみた。
+                        Thread.Sleep(2000);
                         //非同期
-                        player.Play();
+                        //player.Play();
                     }
                     else
                     {
+                        //SoundPlayer player = new SoundPlayer(wavFile);
                         //同期
-                        player.PlaySync();
+                        //player.PlaySync();
+                        while (waveOut.PlaybackState == PlaybackState.Playing)
+                        {
+                            Thread.Sleep(50);
+                        }
                     }
                 }
             }
@@ -1250,23 +1220,6 @@ namespace SyncRoomChatTool
             if (dr == DialogResult.OK)
             {
                 richTextBox1.Font = fontDialog1.Font;
-            }
-        }
-
-        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            try
-            {
-                App.Default.zoomFacter = richTextBox1.ZoomFactor;
-                App.Default.logFont = richTextBox1.Font;
-                App.Default.windowSize = this.Size;
-                App.Default.useTwitcasting = MenuEnableTwitcasting.Checked;
-                App.Default.WindowTopMost = MenuWindowTopMost.Checked;
-                App.Default.OpenLink = MenuOpenLink.Checked;
-                App.Default.Save();
-            }
-            catch { 
-                Application.Exit();
             }
         }
 
@@ -1404,14 +1357,10 @@ namespace SyncRoomChatTool
             App.Default.Save();
         }
 
-        private void Form1_Shown(object sender, EventArgs e)
+        private void ToolStripComboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            //todo:ロードでやってるのが良くないのか、起動してなんぞ動かんと表示が変わらん問題。Shownに移したが変わらん。
-            //何故かチャットウィンドウ開いたら、反応するのよねぇ。
-            richTextBox1.Refresh();
-            this.Size = App.Default.windowSize;
-            this.Refresh();
-            textBox1.Focus();
+            App.Default.OutputDevice = toolStripComboBox1.SelectedIndex;
+            App.Default.Save();
         }
     }
 }
