@@ -455,16 +455,16 @@ namespace SyncRoomChatTool
 #if DEBUG
                 Debug.WriteLine($"{i}:{capabilities.ProductName}");
 #endif
-                toolStripComboBox1.Items.Add(capabilities.ProductName);
+                //toolStripComboBox1.Items.Add(capabilities.ProductName);
             }
-            /* //sort はええか。なんか不定な気がしてはいる。そしてこのメソッド、戻りは誰も使ってないのである。
+
+            //やっぱsortしよう。システム側からの並びが不定のため。
             var list = deviceList.ToArray().AsEnumerable().OrderBy(x => x);
 
             foreach (var device in list)
             {
                 toolStripComboBox1.Items.Add(device.ToString());
-            }
-            */
+            }          
 
             return deviceList;
         }
@@ -651,7 +651,13 @@ namespace SyncRoomChatTool
 
         private void Form1_Shown(object sender, EventArgs e)
         {
-            toolStripComboBox1.SelectedIndex = App.Default.OutputDevice;
+            try
+            {
+                toolStripComboBox1.SelectedIndex = App.Default.OutputDevice;
+            }
+            catch (Exception)
+            {
+            }
             toolStripComboBox1.Select();
 
             //todo:ロードでやってるのが良くないのか、起動してなんぞ動かんと表示が変わらん問題。Shownに移したが変わらん。
