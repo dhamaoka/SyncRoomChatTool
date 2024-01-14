@@ -455,16 +455,18 @@ namespace SyncRoomChatTool
 #if DEBUG
                 Debug.WriteLine($"{i}:{capabilities.ProductName}");
 #endif
-                //toolStripComboBox1.Items.Add(capabilities.ProductName);
+                toolStripComboBox1.Items.Add(capabilities.ProductName);
             }
 
-            //やっぱsortしよう。システム側からの並びが不定のため。
+            /*
+            //ソートダメっぽい。内部とインデックスが違うので。
             var list = deviceList.ToArray().AsEnumerable().OrderBy(x => x);
 
             foreach (var device in list)
             {
                 toolStripComboBox1.Items.Add(device.ToString());
-            }          
+            } 
+            */
 
             return deviceList;
         }
