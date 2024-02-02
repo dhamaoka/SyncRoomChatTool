@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Automation;
+using System.Windows.Forms;
 
 namespace SyncRoomChatTool
 {
@@ -52,11 +53,19 @@ namespace SyncRoomChatTool
         public string GetControlText(IntPtr hWnd)
         {
             StringBuilder controlText = new StringBuilder();
-            Int32 size = SendMessage((int)hWnd, WM_GETTEXTLENGTH, 0, 0).ToInt32();
-            if (size > 0)
+            try
             {
-                controlText = new StringBuilder(size + 1);
-                SendMessage(hWnd, (int)WM_GETTEXT, controlText.Capacity, controlText);
+                Int32 size = SendMessage((int)hWnd, WM_GETTEXTLENGTH, 0, 0).ToInt32();
+                if (size > 0)
+                {
+                    controlText = new StringBuilder(size + 1);
+                    SendMessage(hWnd, (int)WM_GETTEXT, controlText.Capacity, controlText);
+                }
+            }
+            catch (Exception ex)
+            {
+                string errMsg = $"エラーが発生しています in GetControlText {ex.Message}";
+                MessageBox.Show(errMsg);
             }
             return controlText.ToString();
         }

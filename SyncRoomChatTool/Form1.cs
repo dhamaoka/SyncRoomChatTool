@@ -120,7 +120,8 @@ namespace SyncRoomChatTool
         static readonly List<Speaker> VoiceLists = new List<Speaker> { };
 
         private static readonly UIAutomationLib ui = new UIAutomationLib { };
-        private static readonly string voiceVoxDefaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs\\VOICEVOX\\run.exe");
+        private static readonly string voiceVoxDefaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs\\VOICEVOX\\vv-engine\\run.exe");
+        private static readonly string voiceVoxDefaultOldPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs\\VOICEVOX\\run.exe");
 
         static readonly List<Speaker> UserTable = new List<Speaker> { };
         static readonly List<Speaker> StyleDef = new List<Speaker> { };
@@ -540,7 +541,31 @@ namespace SyncRoomChatTool
                 if (File.Exists(voiceVoxDefaultPath))
                 {
                     //設定に保存する＝VOICEVOXが使えると見なす。
+                    //VOICEVOX 0.16 以降のバージョンパス（vv-engine）
                     App.Default.VoiceVoxPath = voiceVoxDefaultPath;
+                }
+                else
+                {
+                    //パス設定なし＝初回＆VOICEVOX 0.16 未満のバージョン（旧パス）
+                    App.Default.VoiceVoxPath = voiceVoxDefaultOldPath;
+                }
+            }
+            else
+            {
+                if (!File.Exists(App.Default.VoiceVoxPath))
+                {
+                    //VOICEVOXデフォルトパスにRun.exeが居る＝インストールされているとみなし、
+                    if (File.Exists(voiceVoxDefaultPath))
+                    {
+                        //設定に保存する＝VOICEVOXが使えると見なす。
+                        //VOICEVOX 0.16 以降のバージョンパス（vv-engine）
+                        App.Default.VoiceVoxPath = voiceVoxDefaultPath;
+                    }
+                    else
+                    {
+                        //パス設定なし＝初回＆VOICEVOX 0.16 未満のバージョン（旧パス）
+                        App.Default.VoiceVoxPath = voiceVoxDefaultOldPath;
+                    }
                 }
             }
 
@@ -1317,6 +1342,12 @@ namespace SyncRoomChatTool
                 {
                     // チャットウィンドウの起動
                     IntPtr SyncwHnd = ui.FindHWndByCaptionAndProcessID("SYNCROOM", targetProc.Id);
+                    
+                    if (SyncwHnd == IntPtr.Zero)
+                    {
+                        return;
+                    }                  
+
                     AutomationElement mainWindow = AutomationElement.FromHandle(SyncwHnd);
 
                     AutomationElement buttonElement = ui.GetButtonElement(mainWindow, "チャット");
