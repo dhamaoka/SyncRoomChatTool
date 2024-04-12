@@ -764,72 +764,76 @@ namespace SyncRoomChatTool
                                     //チャットログに変化があった場合。
                                     List<Diff> diffs = diffmatch.diff_main(oldLog, vp.Current.Value);
                                     diffmatch.diff_cleanupSemantic(diffs);
-                                    foreach (Diff result in diffs)
+
+                                    if ((diffs.Count > 0) && (!string.IsNullOrEmpty(oldLog)))
                                     {
-                                        if (result.operation == Operation.INSERT)
+                                        foreach (Diff result in diffs)
                                         {
-                                            string[] lines = result.text.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                                            foreach (string newComment in lines)
+                                            if (result.operation == Operation.INSERT)
                                             {
-                                                newDt = DateTime.Now;
-                                                CommentObject CommentObj = new CommentObject(newComment, oldComment, App.Default.canSpeech)
+                                                string[] lines = result.text.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                                                foreach (string newComment in lines)
                                                 {
-                                                    LastCommentTime = lastDt,
-                                                    NowCommentTime = newDt
-                                                };
-                                                if (string.IsNullOrEmpty(CommentObj.Comment) == false)
-                                                {
-                                                    //何かコメントあり。
-                                                    if (IsLogEmpty() == false)
+                                                    newDt = DateTime.Now;
+                                                    CommentObject CommentObj = new CommentObject(newComment, oldComment, App.Default.canSpeech)
                                                     {
-                                                        //かつ、リッチテキストボックスが空じゃない＝改行する。
-                                                        UpdateRichText(Environment.NewLine);
-                                                    }
-
-                                                    string addLine = CommentObj.UserName;
-                                                    if (string.IsNullOrEmpty(addLine) == false)
+                                                        LastCommentTime = lastDt,
+                                                        NowCommentTime = newDt
+                                                    };
+                                                    if (string.IsNullOrEmpty(CommentObj.Comment) == false)
                                                     {
-                                                        UpdateRichText(addLine);
-
-                                                        string separator = " ： ";
-                                                        if (CommentObj.IsLink)
+                                                        //何かコメントあり。
+                                                        if (IsLogEmpty() == false)
                                                         {
-                                                            //リンクだった時の処理
+                                                            //かつ、リッチテキストボックスが空じゃない＝改行する。
                                                             UpdateRichText(Environment.NewLine);
-                                                            addLine = " \t" + CommentObj.UriString;
                                                         }
-                                                        else
+
+                                                        string addLine = CommentObj.UserName;
+                                                        if (string.IsNullOrEmpty(addLine) == false)
                                                         {
-                                                            //リンクじゃない。
-                                                            //名前はもう出してるので、CommentObject.Commentじゃなく、RawComment を新たに作成。
-                                                            addLine = separator + CommentObj.RawComment;
+                                                            UpdateRichText(addLine);
+
+                                                            string separator = " ： ";
+                                                            if (CommentObj.IsLink)
+                                                            {
+                                                                //リンクだった時の処理
+                                                                UpdateRichText(Environment.NewLine);
+                                                                addLine = " \t" + CommentObj.UriString;
+                                                            }
+                                                            else
+                                                            {
+                                                                //リンクじゃない。
+                                                                //名前はもう出してるので、CommentObject.Commentじゃなく、RawComment を新たに作成。
+                                                                addLine = separator + CommentObj.RawComment;
+                                                            }
+
+                                                            UpdateRichText(addLine);
                                                         }
-
-                                                        UpdateRichText(addLine);
                                                     }
-                                                }
-                                                else
-                                                {
-                                                    //コメントなし。改行のみ。
-                                                    CommentObj.CanSpeech = false;
-                                                }
-
-                                                if (CommentObj.CanSpeech)
-                                                {
-                                                    //キューにぶっ込む。
-                                                    CommentQue.TryAdd(CommentObj);
-                                                }
-
-                                                oldComment = newComment;
-                                                lastDt = newDt;
-
-                                                bool existsFlg = VoiceLists.Exists(x => x.StyleId == CommentObj.StyleId);
-                                                if (existsFlg)
-                                                {
-                                                    //VoiceListsから、StyleIdその他の取り出し。
-                                                    foreach (var item in VoiceLists.Where(x => x.StyleId == CommentObj.StyleId))
+                                                    else
                                                     {
-                                                        UpdateStatusStrip(3, $"名前：{CommentObj.UserName} ボイス：[{item.StyleId}]{item.UserName}");
+                                                        //コメントなし。改行のみ。
+                                                        CommentObj.CanSpeech = false;
+                                                    }
+
+                                                    if (CommentObj.CanSpeech)
+                                                    {
+                                                        //キューにぶっ込む。
+                                                        CommentQue.TryAdd(CommentObj);
+                                                    }
+
+                                                    oldComment = newComment;
+                                                    lastDt = newDt;
+
+                                                    bool existsFlg = VoiceLists.Exists(x => x.StyleId == CommentObj.StyleId);
+                                                    if (existsFlg)
+                                                    {
+                                                        //VoiceListsから、StyleIdその他の取り出し。
+                                                        foreach (var item in VoiceLists.Where(x => x.StyleId == CommentObj.StyleId))
+                                                        {
+                                                            UpdateStatusStrip(3, $"名前：{CommentObj.UserName} ボイス：[{item.StyleId}]{item.UserName}");
+                                                        }
                                                     }
                                                 }
                                             }
