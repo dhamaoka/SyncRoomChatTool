@@ -765,7 +765,7 @@ namespace SyncRoomChatTool
                                     List<Diff> diffs = diffmatch.diff_main(oldLog, vp.Current.Value);
                                     diffmatch.diff_cleanupSemantic(diffs);
 
-                                    if ((diffs.Count > 0) && (!string.IsNullOrEmpty(oldLog)))
+                                    if ((diffs.Count > 0) && (!string.IsNullOrEmpty(oldLog)) || ((diffs.Count == 0) && string.IsNullOrEmpty(oldLog)))
                                     {
                                         foreach (Diff result in diffs)
                                         {
