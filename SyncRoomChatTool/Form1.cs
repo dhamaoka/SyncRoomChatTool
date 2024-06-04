@@ -729,6 +729,28 @@ namespace SyncRoomChatTool
             DateTime lastDt = DateTime.Now;
             DateTime newDt;
             UpdateRichText("");
+
+            //起動時特別処理。だせぇ。ループの中でも先頭で毎回処理してる内容。
+            //チャットログウィンドウを検出して、ログの中身をoldLogにぶっ込む。ようは初期化。
+            //この処理にて、SyncRoom起動中に、読み上げちゃんを再起動しても、過去のログを読み上げないはず。
+            TargetProcess targetProcFirst = new TargetProcess(ProcessName);
+            IntPtr chatwHndFirst = ui.FindHWndByCaptionAndProcessID("チャット", targetProcFirst.Id);
+            if (chatwHndFirst != IntPtr.Zero)
+            {
+                AutomationElement chatLogFirst = ui.GetEditElement(AutomationElement.FromHandle(chatwHndFirst), "チャットログ");
+                ValuePattern vpFirst = ui.GetValuePattern(chatLogFirst);
+
+                if (vpFirst != null) {
+                    Match matchFirst = Regex.Match(chatLogFirst.Current.Name, "^チャットログ");
+                    if (matchFirst.Success)
+                    {
+                        oldLog = vpFirst.Current.Value;
+                    }
+                }
+            }
+
+            bool firstFlg = string.IsNullOrEmpty(oldLog);
+
             await Task.Run(async () =>
             {
                 while (true)
@@ -765,7 +787,9 @@ namespace SyncRoomChatTool
                                     List<Diff> diffs = diffmatch.diff_main(oldLog, vp.Current.Value);
                                     diffmatch.diff_cleanupSemantic(diffs);
 
-                                    if ((diffs.Count > 0) && (!string.IsNullOrEmpty(oldLog)) || ((diffs.Count == 0) && string.IsNullOrEmpty(oldLog)))
+                                    //oldLogの初期化処理を入れた事で、ここでは違いがあれば発話する条件でよいかな。
+                                    //→ それだけではやっぱり足らないので、oldLogが空じゃない場合も必要。
+                                    if ((firstFlg)||(diffs.Count > 0) && (!string.IsNullOrEmpty(oldLog)))
                                     {
                                         foreach (Diff result in diffs)
                                         {
